@@ -2,8 +2,7 @@
 
 const { spawn, spawnSync } = require('node:child_process')
 const { existsSync, mkdirSync, mkdtempSync, rmSync } = require('node:fs')
-const { tmpdir } = require('node:os')
-const { join, resolve } = require('node:path')
+const { dirname, join, resolve, sep } = require('node:path')
 
 const executableArg = process.argv[2]
 if (!executableArg) {
@@ -19,7 +18,9 @@ if (!existsSync(executable)) {
 
 const timeoutMs = Number.parseInt(process.env.BAI_WORK_SMOKE_TIMEOUT_MS || '240000', 10)
 const candidatePorts = Array.from({ length: 12 }, (_, index) => 8899 + index)
-const tempRoot = mkdtempSync(join(tmpdir(), 'bai-work-packaged-smoke-'))
+const smokeWorkDir = join(process.cwd(), 'work')
+mkdirSync(smokeWorkDir, { recursive: true })
+const tempRoot = mkdtempSync(join(smokeWorkDir, 'bai-work-packaged-smoke-'))
 const homeDir = join(tempRoot, 'home')
 const userDataDir = join(tempRoot, 'user-data')
 const appDataDir = join(tempRoot, 'app-data')
@@ -28,11 +29,33 @@ for (const dir of [homeDir, userDataDir, appDataDir, localAppDataDir]) {
   mkdirSync(dir, { recursive: true })
 }
 
+const appMarker = `.app${sep}`
+const appMarkerIndex = executable.indexOf(appMarker)
+const packagedRoot = appMarkerIndex >= 0
+  ? executable.slice(0, appMarkerIndex + '.app'.length)
+  : dirname(executable)
+
+function pathIsWithin(path, root) {
+  const normalizedPath = resolve(path)
+  const normalizedRoot = resolve(root)
+  return normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}${sep}`)
+}
+
+function healthBelongsToSpawnedApp(body) {
+  const command = typeof body?.cli?.command === 'string' ? body.cli.command.trim() : ''
+  if (!command) return false
+  return pathIsWithin(command, homeDir) || pathIsWithin(command, packagedRoot)
+}
+
 let stdout = ''
 let stderr = ''
 let exitCode = null
 let exitSignal = null
-const child = spawn(executable, ['--disable-gpu', `--user-data-dir=${userDataDir}`], {
+const child = spawn(executable, [
+  '--disable-gpu',
+  '--bai-work-runtime-smoke',
+  `--user-data-dir=${userDataDir}`
+], {
   env: {
     ...process.env,
     HOME: homeDir,
@@ -77,7 +100,8 @@ async function findHealthyRuntime() {
           body?.status === 'ok' &&
           body?.service === 'bai-work' &&
           body?.runtime === 'bai-code' &&
-          body?.cli?.installed === true
+          body?.cli?.installed === true &&
+          healthBelongsToSpawnedApp(body)
         ) {
           return { port, body }
         }
@@ -104,6 +128,21 @@ async function stopChild() {
   child.kill('SIGKILL')
 }
 
+async function removeTempRoot() {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      rmSync(tempRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 })
+      return
+    } catch (error) {
+      if (attempt === 9) {
+        console.warn(`[packaged-smoke] Could not remove temporary directory: ${error.message}`)
+        return
+      }
+      await delay(250)
+    }
+  }
+}
+
 async function main() {
   try {
     const result = await findHealthyRuntime()
@@ -116,7 +155,7 @@ async function main() {
     process.exitCode = 1
   } finally {
     await stopChild()
-    rmSync(tempRoot, { recursive: true, force: true })
+    await removeTempRoot()
   }
 }
 

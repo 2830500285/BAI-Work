@@ -1383,6 +1383,12 @@ app.whenReady().then(async () => {
   createWindow({ suppressInitialShow: shouldStartHidden(initial) })
   traceStartup('createWindow:returned')
 
+  if (process.argv.includes('--bai-work-runtime-smoke')) {
+    void ensureRuntime(initial).catch((error) => {
+      console.error('[bai-work] packaged runtime smoke failed:', error)
+    })
+  }
+
   void pruneOnStartup().catch((err) => {
     console.warn('[bai-work] prune logs:', err)
   })
