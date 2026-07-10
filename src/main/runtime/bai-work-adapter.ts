@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
-import { basename, delimiter, join } from 'node:path'
+import { basename, delimiter, join, win32 as win32Path } from 'node:path'
 import { URL } from 'node:url'
 import {
   DEFAULT_KUN_DATA_DIR,
@@ -334,22 +334,51 @@ function probeBaiCodeCli(command: string): Promise<BaiCodeProbe> {
   })
 }
 
-function officialWheelPlatformTag(): string | null {
-  if (process.platform === 'darwin' && process.arch === 'arm64') return 'macosx_11_0_arm64'
-  if (process.platform === 'win32' && process.arch === 'x64') return 'win_amd64'
+function officialWheelPlatformTag(
+  platform: NodeJS.Platform = process.platform,
+  arch: string = process.arch
+): string | null {
+  if (platform === 'darwin' && arch === 'arm64') return 'macosx_11_0_arm64'
+  if (platform === 'win32' && arch === 'x64') return 'win_amd64'
   return null
 }
 
-function officialRuntimeVenvCommand(venvDir: string): string {
-  return process.platform === 'win32'
-    ? join(venvDir, 'Scripts', 'baicode.exe')
+function officialRuntimeVenvCommand(
+  venvDir: string,
+  platform: NodeJS.Platform = process.platform
+): string {
+  return platform === 'win32'
+    ? win32Path.join(venvDir, 'Scripts', 'baicode.exe')
     : join(venvDir, 'bin', 'baicode')
 }
 
-function officialRuntimeVenvPython(venvDir: string): string {
-  return process.platform === 'win32'
-    ? join(venvDir, 'Scripts', 'python.exe')
+function officialRuntimeVenvPython(
+  venvDir: string,
+  platform: NodeJS.Platform = process.platform
+): string {
+  return platform === 'win32'
+    ? win32Path.join(venvDir, 'Scripts', 'python.exe')
     : join(venvDir, 'bin', 'python')
+}
+
+function officialRuntimePythonCandidates(
+  platform: NodeJS.Platform = process.platform
+): Array<{ command: string; argsPrefix: string[] }> {
+  const supportedVersions = ['3.13', '3.12', '3.11', '3.10']
+  if (platform === 'win32') {
+    return [
+      { command: 'python', argsPrefix: [] },
+      { command: 'py', argsPrefix: [] },
+      ...supportedVersions.map((version) => ({ command: 'py', argsPrefix: [`-${version}`] })),
+      ...supportedVersions.map((version) => ({ command: `python${version}`, argsPrefix: [] })),
+      { command: 'python3', argsPrefix: [] }
+    ]
+  }
+  return [
+    { command: 'python3', argsPrefix: [] },
+    { command: 'python', argsPrefix: [] },
+    ...supportedVersions.map((version) => ({ command: `python${version}`, argsPrefix: [] }))
+  ]
 }
 
 function runProcessCapture(
@@ -393,18 +422,7 @@ function runProcessCapture(
 }
 
 async function detectOfficialRuntimePython(): Promise<BaiRuntimePython | null> {
-  const candidates: Array<{ command: string; argsPrefix: string[] }> = process.platform === 'win32'
-    ? [
-        { command: 'python', argsPrefix: [] },
-        { command: 'py', argsPrefix: [] },
-        { command: 'python3', argsPrefix: [] }
-      ]
-    : [
-        { command: 'python3', argsPrefix: [] },
-        { command: 'python', argsPrefix: [] }
-      ]
-
-  for (const candidate of candidates) {
+  for (const candidate of officialRuntimePythonCandidates()) {
     const result = await runProcessCapture(candidate.command, [
       ...candidate.argsPrefix,
       '-c',
@@ -2382,6 +2400,11 @@ export const baiWorkAdapterTestInternals = {
   baiCodeUnavailablePayload,
   buildBaiChatMessages,
   bundledBaiCodeCommand,
+  findOfficialWheelhouse,
+  officialRuntimePythonCandidates,
+  officialRuntimeVenvCommand,
+  officialRuntimeVenvPython,
+  officialWheelPlatformTag,
   runtimeSearchPath,
   resolveAvailablePort: baiWorkRuntimeAdapter.resolveAvailablePort
 }

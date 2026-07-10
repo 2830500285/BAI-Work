@@ -77,14 +77,17 @@ const baiCodeRuntimeExtraResources = shouldBundleBaiCodeRuntime() && existsSync(
     ]
   : []
 const baiCodeOfficialDir = join(__dirname, 'resources', 'bai-code-official')
+const baiCodeOfficialFilter = officialBaiCodeResourceFilter()
 const baiCodeOfficialExtraResources = shouldBundleBaiCodeOfficialWheels() && existsSync(baiCodeOfficialDir)
   ? [
       {
         from: baiCodeOfficialDir,
-        to: 'BAI-Code-Official'
+        to: 'BAI-Code-Official',
+        filter: baiCodeOfficialFilter
       }
     ]
   : []
+const requestedMacArch = requestedBuilderArch() === 'arm64' ? 'arm64' : 'x64'
 
 function normalizeUpdateChannel(raw) {
   const value = String(raw || '').trim()
@@ -125,6 +128,25 @@ function shouldBundleBaiCodeOfficialWheels() {
     'BAI_WORK_BUNDLE_BAI_CODE_OFFICIAL',
     (platform === 'darwin' && arch === 'arm64') || (platform === 'win32' && arch === 'x64')
   )
+}
+
+function officialBaiCodeResourceFilter() {
+  const platform = requestedBuilderPlatform()
+  const arch = requestedBuilderArch()
+  const platformTag = platform === 'darwin' && arch === 'arm64'
+    ? 'macosx_11_0_arm64'
+    : platform === 'win32' && arch === 'x64'
+      ? 'win_amd64'
+      : ''
+  if (!platformTag) return []
+  return [
+    'README.md',
+    'baicode_release_whls.txt',
+    platformTag === 'win_amd64'
+      ? 'scripts/baicode_install.ps1'
+      : 'scripts/baicode_install.sh',
+    `wheelhouse/${platformTag}-*/**/*`
+  ]
 }
 
 if (releaseAppVersion && !/^\d+\.\d+\.\d+$/.test(releaseAppVersion)) {
@@ -192,10 +214,10 @@ module.exports = {
     },
     // macOS 不会自动套圆角遮罩,图标文件本身需要是「圆角方块 + 透明边距」
     icon: './src/asset/img/bai-work-mac.png',
-    // Mac Intel / x64 only for the BAI Work Intel release.
+    // Explicit release scripts select the native x64 or arm64 target.
     target: [
-      { target: 'dmg', arch: ['x64'] },
-      { target: 'zip', arch: ['x64'] }
+      { target: 'dmg', arch: [requestedMacArch] },
+      { target: 'zip', arch: [requestedMacArch] }
     ]
   },
   dmg: {

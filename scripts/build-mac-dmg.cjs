@@ -4,16 +4,17 @@ const { join, resolve } = require('node:path')
 
 const projectRoot = resolve(__dirname, '..')
 const arch = process.argv[2] || 'x64'
-if (arch !== 'x64') {
-  throw new Error(`build-mac-dmg.cjs currently supports x64 only, got: ${arch}`)
+if (arch !== 'x64' && arch !== 'arm64') {
+  throw new Error(`Usage: node scripts/build-mac-dmg.cjs <x64|arm64>; got: ${arch}`)
 }
 
 const pkg = require(join(projectRoot, 'package.json'))
 const version = (process.env.BAI_WORK_APP_VERSION || pkg.version).trim()
-const appDir = join(projectRoot, 'dist', 'mac', 'BAI Work.app')
-const sourceDir = join(projectRoot, 'dist', 'mac')
+const distDir = resolve(process.env.BAI_WORK_DIST_DIR || join(projectRoot, 'dist'))
+const sourceDir = join(distDir, arch === 'arm64' ? 'mac-arm64' : 'mac')
+const appDir = join(sourceDir, 'BAI Work.app')
 const applicationsLink = join(sourceDir, 'Applications')
-const output = join(projectRoot, 'dist', `BAI-Work-${version}-mac-${arch}.dmg`)
+const output = join(distDir, `BAI-Work-${version}-mac-${arch}.dmg`)
 
 if (!existsSync(appDir)) {
   throw new Error(`Packaged app not found: ${appDir}`)

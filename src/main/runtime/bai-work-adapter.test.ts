@@ -112,6 +112,38 @@ describe('BAI Work runtime adapter', () => {
     expect(bundled).toContain('resources/bai-code-runtime/bin/baicode')
   })
 
+  it('maps official BAI Code wheels and venv executables for Apple Silicon and Windows', () => {
+    const officialRoot = join(process.cwd(), 'resources', 'bai-code-official')
+
+    expect(baiWorkAdapterTestInternals.officialWheelPlatformTag('darwin', 'arm64'))
+      .toBe('macosx_11_0_arm64')
+    expect(baiWorkAdapterTestInternals.officialWheelPlatformTag('win32', 'x64'))
+      .toBe('win_amd64')
+    expect(baiWorkAdapterTestInternals.officialWheelPlatformTag('darwin', 'x64')).toBeNull()
+    expect(baiWorkAdapterTestInternals.findOfficialWheelhouse(
+      officialRoot,
+      'macosx_11_0_arm64',
+      'cp311'
+    )).toContain('macosx_11_0_arm64-cp311')
+    expect(baiWorkAdapterTestInternals.findOfficialWheelhouse(
+      officialRoot,
+      'win_amd64',
+      'cp311'
+    )).toContain('win_amd64-cp311')
+    expect(baiWorkAdapterTestInternals.officialRuntimeVenvCommand(
+      'C:\\Users\\tester\\.bai-work\\runtime',
+      'win32'
+    )).toBe('C:\\Users\\tester\\.bai-work\\runtime\\Scripts\\baicode.exe')
+  })
+
+  it('probes version-specific Windows Python launchers when the default is unsupported', () => {
+    const candidates = baiWorkAdapterTestInternals.officialRuntimePythonCandidates('win32')
+
+    expect(candidates).toContainEqual({ command: 'py', argsPrefix: ['-3.13'] })
+    expect(candidates).toContainEqual({ command: 'py', argsPrefix: ['-3.10'] })
+    expect(candidates).toContainEqual({ command: 'python3.11', argsPrefix: [] })
+  })
+
   it('adds user bin directories to the runtime PATH for local tools such as RTK', () => {
     const path = baiWorkAdapterTestInternals.runtimeSearchPath('/usr/bin:/bin')
 

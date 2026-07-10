@@ -72,6 +72,33 @@ function createMacPackContext(root: string, arch: 'x64' | 'arm64' = 'x64'): {
   }
 }
 
+function createWindowsPackContext(root: string): {
+  appOutDir: string
+  electronPlatformName: string
+  packager: { appInfo: { productFilename: string } }
+} {
+  return {
+    appOutDir: join(root, 'win-unpacked'),
+    electronPlatformName: 'win32',
+    packager: {
+      appInfo: {
+        productFilename: 'BAI Work'
+      }
+    }
+  }
+}
+
+function touchOfficialRuntimeResources(
+  context: ReturnType<typeof createMacPackContext> | ReturnType<typeof createWindowsPackContext>
+): string[] {
+  const platformTag = afterPack._internals.officialPlatformTagForContext(context)
+  if (!platformTag) throw new Error('Test context does not map to an official runtime platform.')
+  const paths = afterPack._internals.officialRuntimeRequiredPaths(platformTag)
+  const resourcesRoot = afterPack._internals.packedResourcesDir(context)
+  for (const relativePath of paths) touch(join(resourcesRoot, relativePath))
+  return paths
+}
+
 afterEach(() => {
   while (tempRoots.length > 0) {
     const root = tempRoots.pop()
@@ -144,6 +171,20 @@ describe('electron-builder BAI Work packaging', () => {
     expect(JSON.stringify(winConfig.extraResources)).toContain('BAI-Code-Official')
     expect(JSON.stringify(macArmConfig.extraResources)).not.toContain('BAI-Code-Runtime')
     expect(JSON.stringify(winConfig.extraResources)).not.toContain('BAI-Code-Runtime')
+    expect(macArmConfig.mac.target).toEqual([
+      { target: 'dmg', arch: ['arm64'] },
+      { target: 'zip', arch: ['arm64'] }
+    ])
+    const macOfficial = macArmConfig.extraResources.find((resource: { to?: string }) =>
+      resource.to === 'BAI-Code-Official'
+    )
+    const winOfficial = winConfig.extraResources.find((resource: { to?: string }) =>
+      resource.to === 'BAI-Code-Official'
+    )
+    expect(macOfficial.filter).toContain('wheelhouse/macosx_11_0_arm64-*/**/*')
+    expect(macOfficial.filter).not.toContain('wheelhouse/win_amd64-*/**/*')
+    expect(winOfficial.filter).toContain('wheelhouse/win_amd64-*/**/*')
+    expect(winOfficial.filter).not.toContain('wheelhouse/macosx_11_0_arm64-*/**/*')
   })
 
   it('validates the packaged app dependencies before release artifacts are created', () => {
@@ -168,13 +209,34 @@ describe('electron-builder BAI Work packaging', () => {
     )
   })
 
-  it('does not require the Mac Intel BAI Code runtime for arm64 app bundles', () => {
+  it('requires the official BAI Code wheelhouse for arm64 app bundles', () => {
     const root = tempRoot()
     const context = createMacPackContext(root, 'arm64')
 
     touch(join(afterPack._internals.unpackedAppRoot(context), 'node_modules/better-sqlite3/package.json'))
+    const officialPaths = touchOfficialRuntimeResources(context)
 
     expect(afterPack._internals.shouldValidateBaiCodeRuntime(context)).toBe(false)
+    expect(afterPack._internals.shouldValidateBaiCodeOfficial(context)).toBe(true)
+    expect(() => afterPack._internals.validatePackagedApp(context)).not.toThrow()
+
+    rmSync(join(afterPack._internals.packedResourcesDir(context), officialPaths.at(-1)!), {
+      force: true
+    })
+    expect(() => afterPack._internals.validatePackagedApp(context)).toThrow(
+      /official BAI Code wheelhouse/
+    )
+  })
+
+  it('requires the official BAI Code wheelhouse for Windows x64 app bundles', () => {
+    const root = tempRoot()
+    const context = createWindowsPackContext(root)
+
+    touch(join(afterPack._internals.unpackedAppRoot(context), 'node_modules/better-sqlite3/package.json'))
+    touchOfficialRuntimeResources(context)
+
+    expect(afterPack._internals.officialPlatformTagForContext(context)).toBe('win_amd64')
+    expect(afterPack._internals.shouldValidateBaiCodeOfficial(context)).toBe(true)
     expect(() => afterPack._internals.validatePackagedApp(context)).not.toThrow()
   })
 

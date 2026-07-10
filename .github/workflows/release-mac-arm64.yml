@@ -1,0 +1,136 @@
+name: Mac Apple Silicon Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to update
+        required: true
+        default: v0.1.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bai-work-mac-arm64
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  RELEASE_CHANNEL: frontier
+  BAI_WORK_UPDATE_CHANNEL: frontier
+
+jobs:
+  build-mac-arm64:
+    name: Build Mac Apple Silicon arm64
+    runs-on: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version='${{ inputs.tag }}'
+          version="${version#v}"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "BAI_WORK_APP_VERSION=$version" >> "$GITHUB_ENV"
+          echo "ARTIFACT_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Set up supported Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify native runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = 'arm64'
+          python -c "import platform; assert platform.machine() == 'arm64', platform.machine()"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Focused tests
+        run: >
+          npm run test --
+          src/main/packaging-config.test.ts
+          src/main/runtime/bai-work-adapter.test.ts
+          src/main/services/bai-runtime-instruction-service.test.ts
+          src/main/services/ecc-mapping-service.test.ts
+          src/main/services/ecc-source-service.test.ts
+
+      - name: Smoke official BAI Code wheelhouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/bai-code-wheel-smoke"
+          "$RUNNER_TEMP/bai-code-wheel-smoke/bin/python" -m pip install \
+            --no-index \
+            --find-links resources/bai-code-official/wheelhouse/macosx_11_0_arm64-cp311 \
+            baicode==0.9.1
+          "$RUNNER_TEMP/bai-code-wheel-smoke/bin/baicode" --version
+
+      - name: Build Mac Apple Silicon release
+        run: npm run dist:mac:arm64
+
+      - name: Verify Mac Apple Silicon package
+        shell: bash
+        run: |
+          set -euo pipefail
+          app='dist/mac-arm64/BAI Work.app'
+          resources="$app/Contents/Resources"
+          file "$app/Contents/MacOS/BAI Work" | tee "$RUNNER_TEMP/bai-work-file.txt"
+          grep -q 'arm64' "$RUNNER_TEMP/bai-work-file.txt"
+          test -d "$resources/BAI-Code-Official"
+          test ! -e "$resources/BAI-Code-Runtime"
+          for tag in cp310 cp311 cp312 cp313; do
+            test -f "$resources/BAI-Code-Official/wheelhouse/macosx_11_0_arm64-$tag/baicode-0.9.1-$tag-$tag-macosx_11_0_arm64.whl"
+          done
+          hdiutil verify "dist/BAI-Work-${ARTIFACT_VERSION}-mac-arm64.dmg"
+
+      - name: Start packaged app and smoke runtime health
+        run: npm run verify:packaged-runtime -- "dist/mac-arm64/BAI Work.app/Contents/MacOS/BAI Work"
+
+      - name: Create checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          shasum -a 256 \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-arm64.dmg" \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-arm64.zip" \
+            | sed 's#  dist/#  #' > dist/SHA256SUMS-mac-arm64.txt
+
+      - name: Upload Mac Apple Silicon release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload '${{ inputs.tag }}' \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-arm64.dmg" \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-arm64.zip" \
+            dist/SHA256SUMS-mac-arm64.txt \
+            --clobber
+
+      - name: Upload Mac Apple Silicon workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bai-work-mac-arm64-release
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/BAI-Work-*-mac-arm64.dmg
+            dist/BAI-Work-*-mac-arm64.zip
+            dist/SHA256SUMS-mac-arm64.txt

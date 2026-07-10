@@ -17,7 +17,7 @@
     "dist:mac:signed": "rm -f dist/BAI-Work-*-mac-* dist/latest-mac.yml && MAC_SIGN=1 npm run dist:mac:x64 && node ./scripts/generate-mac-latest.cjs dist",
     "dist:mac:arm64": "npm run build && npm run dist:mac:arm64:dmg && npm run dist:mac:arm64:zip",
     "dist:mac:x64": "npm run build && npm run dist:mac:x64:dmg && npm run dist:mac:x64:zip",
-    "dist:mac:arm64:dmg": "npx --yes electron-builder@26.8.1 --config electron-builder.config.cjs --publish never --mac dmg --arm64",
+    "dist:mac:arm64:dmg": "npx --yes electron-builder@26.8.1 --config electron-builder.config.cjs --publish never --mac dir --arm64 && node ./scripts/build-mac-dmg.cjs arm64",
     "dist:mac:x64:dmg": "npx --yes electron-builder@26.8.1 --config electron-builder.config.cjs --publish never --mac dir --x64 && node ./scripts/build-mac-dmg.cjs x64",
     "dist:mac:arm64:zip": "node ./scripts/zip-mac-app.cjs arm64",
     "dist:mac:x64:zip": "node ./scripts/zip-mac-app.cjs x64",
@@ -30,6 +30,7 @@
     "r2:promote": "node ./scripts/publish-r2.mjs promote",
     "postinstall": "node ./scripts/postinstall.cjs",
     "verify:apple": "node ./scripts/verify-apple-signing.cjs",
+    "verify:packaged-runtime": "node ./scripts/smoke-packaged-app.cjs",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.node.json",
     "mac:unquarantine": "bash ./scripts/mac-unquarantine.sh"

@@ -41,6 +41,28 @@ const BAI_CODE_RUNTIME_REQUIRED_PATHS = [
   'BAI-Code-Runtime/site-packages/baicode-0.9.1.dist-info'
 ]
 
+const OFFICIAL_PYTHON_TAGS = ['cp310', 'cp311', 'cp312', 'cp313']
+
+function officialPlatformTagForContext(context) {
+  const platform = normalizePlatform(context.electronPlatformName)
+  const appOutDir = String(context.appOutDir || '')
+  if (platform === 'darwin' && /arm64/i.test(appOutDir)) return 'macosx_11_0_arm64'
+  if (platform === 'win32' && !/arm64/i.test(appOutDir)) return 'win_amd64'
+  return null
+}
+
+function officialRuntimeRequiredPaths(platformTag) {
+  const installer = platformTag === 'win_amd64'
+    ? 'BAI-Code-Official/scripts/baicode_install.ps1'
+    : 'BAI-Code-Official/scripts/baicode_install.sh'
+  return [
+    installer,
+    ...OFFICIAL_PYTHON_TAGS.map((pythonTag) =>
+      `BAI-Code-Official/wheelhouse/${platformTag}-${pythonTag}/baicode-0.9.1-${pythonTag}-${pythonTag}-${platformTag}.whl`
+    )
+  ]
+}
+
 function npmCommand(args, platform = process.platform) {
   if (platform === 'win32') {
     return {
@@ -60,16 +82,33 @@ function shouldValidateBaiCodeRuntime(context) {
   )
 }
 
+function shouldValidateBaiCodeOfficial(context) {
+  return envFlag(
+    'BAI_WORK_BUNDLE_BAI_CODE_OFFICIAL',
+    officialPlatformTagForContext(context) !== null
+  )
+}
+
 function validatePackagedApp(context) {
   const root = unpackedAppRoot(context)
   assertExists(
     join(root, 'node_modules', 'better-sqlite3', 'package.json'),
     'root better-sqlite3 dependency'
   )
-  if (!shouldValidateBaiCodeRuntime(context)) return
   const resourcesRoot = packedResourcesDir(context)
-  for (const relativePath of BAI_CODE_RUNTIME_REQUIRED_PATHS) {
-    assertExists(join(resourcesRoot, relativePath), `bundled BAI Code runtime path ${relativePath}`)
+  if (shouldValidateBaiCodeRuntime(context)) {
+    for (const relativePath of BAI_CODE_RUNTIME_REQUIRED_PATHS) {
+      assertExists(join(resourcesRoot, relativePath), `bundled BAI Code runtime path ${relativePath}`)
+    }
+  }
+  if (shouldValidateBaiCodeOfficial(context)) {
+    const platformTag = officialPlatformTagForContext(context)
+    if (!platformTag) {
+      throw new Error('[after-pack] Official BAI Code resources were requested for an unsupported platform.')
+    }
+    for (const relativePath of officialRuntimeRequiredPaths(platformTag)) {
+      assertExists(join(resourcesRoot, relativePath), `official BAI Code wheelhouse path ${relativePath}`)
+    }
   }
 }
 
@@ -109,10 +148,14 @@ module.exports = afterPack
 module.exports.default = afterPack
 module.exports._internals = {
   BAI_CODE_RUNTIME_REQUIRED_PATHS,
+  OFFICIAL_PYTHON_TAGS,
   appBundlePath,
+  officialPlatformTagForContext,
+  officialRuntimeRequiredPaths,
   packedResourcesDir,
   unpackedAppRoot,
   npmCommand,
   shouldValidateBaiCodeRuntime,
+  shouldValidateBaiCodeOfficial,
   validatePackagedApp
 }
