@@ -14,6 +14,10 @@ This directory contains the official BAI Code 0.9.1 wheels for:
 - macOS arm64, Python cp310-cp313
 - Windows win_amd64, Python cp310-cp313
 
+Each platform wheelhouse also includes the transitive wheels required for a
+fully offline install. The Windows wheelhouses include `colorama==0.4.6`, from
+https://pypi.org/project/colorama/0.4.6/, because `tqdm` requires it on Windows.
+
 BAI Work uses these wheels to create an app-local virtual environment under the
 BAI Work data directory when a system `baicode` command is not already
 available.

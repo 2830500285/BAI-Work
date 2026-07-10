@@ -39,6 +39,7 @@ const child = spawn(executable, ['--disable-gpu', `--user-data-dir=${userDataDir
     USERPROFILE: homeDir,
     APPDATA: appDataDir,
     LOCALAPPDATA: localAppDataDir,
+    BAI_API_KEY: process.env.BAI_API_KEY || 'ci-smoke-placeholder-not-a-credential',
     BAI_WORK_ALLOW_UNSIGNED_UPDATES: '0'
   },
   stdio: ['ignore', 'pipe', 'pipe']

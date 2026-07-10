@@ -57,9 +57,12 @@ function officialRuntimeRequiredPaths(platformTag) {
     : 'BAI-Code-Official/scripts/baicode_install.sh'
   return [
     installer,
-    ...OFFICIAL_PYTHON_TAGS.map((pythonTag) =>
-      `BAI-Code-Official/wheelhouse/${platformTag}-${pythonTag}/baicode-0.9.1-${pythonTag}-${pythonTag}-${platformTag}.whl`
-    )
+    ...OFFICIAL_PYTHON_TAGS.flatMap((pythonTag) => [
+      `BAI-Code-Official/wheelhouse/${platformTag}-${pythonTag}/baicode-0.9.1-${pythonTag}-${pythonTag}-${platformTag}.whl`,
+      ...(platformTag === 'win_amd64'
+        ? [`BAI-Code-Official/wheelhouse/${platformTag}-${pythonTag}/colorama-0.4.6-py2.py3-none-any.whl`]
+        : [])
+    ])
   ]
 }
 

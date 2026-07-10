@@ -251,6 +251,9 @@ describe('electron-builder BAI Work packaging', () => {
     touchOfficialRuntimeResources(context)
 
     expect(afterPack._internals.officialPlatformTagForContext(context)).toBe('win_amd64')
+    expect(afterPack._internals.officialRuntimeRequiredPaths('win_amd64')).toContain(
+      'BAI-Code-Official/wheelhouse/win_amd64-cp311/colorama-0.4.6-py2.py3-none-any.whl'
+    )
     expect(afterPack._internals.shouldValidateBaiCodeOfficial(context)).toBe(true)
     expect(() => afterPack._internals.validatePackagedApp(context)).not.toThrow()
   })
