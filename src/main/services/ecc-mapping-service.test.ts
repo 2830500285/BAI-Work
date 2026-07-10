@@ -136,7 +136,10 @@ describe('EBAI mapping service', () => {
     expect(hooksToml).toContain('name = "exec_shell"')
     expect(hooksToml).toContain('type = "tool_category"')
     expect(hooksToml).toContain('category = "file_write"')
-    expect(hooksToml).toContain(`CLAUDE_PLUGIN_ROOT='${source}' ECC_PLUGIN_ROOT='${source}' echo pre`)
+    const tomlEscapedSource = source.replaceAll('\\', '\\\\')
+    expect(hooksToml).toContain(
+      `CLAUDE_PLUGIN_ROOT='${tomlEscapedSource}' ECC_PLUGIN_ROOT='${tomlEscapedSource}' echo pre`
+    )
   })
 
   it('installs all rule directories only when includeAllRules is set', async () => {

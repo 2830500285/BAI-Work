@@ -33,7 +33,6 @@ jobs:
         run: |
           $version = '${{ inputs.tag }}'.TrimStart('v')
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $version" }
-          "BAI_WORK_APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ARTIFACT_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Set up Node.js
@@ -86,7 +85,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'BAI Code CLI smoke failed.' }
 
       - name: Build Windows release
-        run: npm run dist:win
+        shell: pwsh
+        run: |
+          $env:BAI_WORK_APP_VERSION = $env:ARTIFACT_VERSION
+          npm run dist:win
 
       - name: Verify Windows x64 package
         shell: pwsh

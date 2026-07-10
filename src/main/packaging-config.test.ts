@@ -10,6 +10,7 @@ const afterPack = require('../../scripts/after-pack.cjs')
 const macNotarize = require('../../scripts/mac-notarize.cjs')
 
 const tempRoots: string[] = []
+const itWithUnixPermissions = process.platform === 'win32' ? it.skip : it
 
 function tempRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'bai-work-packaging-'))
@@ -54,6 +55,17 @@ function loadBuilderConfigWithEnv(
     }
     require(configPath)
   }
+}
+
+function loadMacIntelBuilderConfig(): typeof builderConfig {
+  return loadBuilderConfigWithEnv(
+    {
+      BAI_WORK_APP_VERSION: undefined,
+      BAI_WORK_BUNDLE_BAI_CODE_RUNTIME: undefined,
+      BAI_WORK_BUNDLE_BAI_CODE_OFFICIAL: undefined
+    },
+    ['node', 'electron-builder', '--mac', '--x64']
+  )
 }
 
 function createMacPackContext(root: string, arch: 'x64' | 'arm64' = 'x64'): {
@@ -108,25 +120,28 @@ afterEach(() => {
 
 describe('electron-builder BAI Work packaging', () => {
   it('uses BAI Work metadata and Mac Intel artifacts', () => {
-    expect(builderConfig.appId).toBe('ai.b.work.desktop')
-    expect(builderConfig.productName).toBe('BAI Work')
-    expect(builderConfig.artifactName).toBe('BAI-Work-${version}-${os}-${arch}.${ext}')
-    expect(builderConfig.mac.icon).toBe('./src/asset/img/bai-work-mac.png')
-    expect(builderConfig.mac.target).toEqual([
+    const intelConfig = loadMacIntelBuilderConfig()
+
+    expect(intelConfig.appId).toBe('ai.b.work.desktop')
+    expect(intelConfig.productName).toBe('BAI Work')
+    expect(intelConfig.artifactName).toBe('BAI-Work-${version}-${os}-${arch}.${ext}')
+    expect(intelConfig.mac.icon).toBe('./src/asset/img/bai-work-mac.png')
+    expect(intelConfig.mac.target).toEqual([
       { target: 'dmg', arch: ['x64'] },
       { target: 'zip', arch: ['x64'] }
     ])
-    expect(builderConfig.asarUnpack).toEqual(expect.arrayContaining([
+    expect(intelConfig.asarUnpack).toEqual(expect.arrayContaining([
       '**/node_modules/better-sqlite3/**/*'
     ]))
   })
 
   it('bundles only project-owned public skills, not local user skill directories', () => {
-    const serializedResources = JSON.stringify(builderConfig.extraResources)
-    const skillResource = builderConfig.extraResources.find((resource: { to?: string }) =>
+    const intelConfig = loadMacIntelBuilderConfig()
+    const serializedResources = JSON.stringify(intelConfig.extraResources)
+    const skillResource = intelConfig.extraResources.find((resource: { to?: string }) =>
       resource.to === 'BAI-Work-Skills'
     )
-    const runtimeResource = builderConfig.extraResources.find((resource: { to?: string }) =>
+    const runtimeResource = intelConfig.extraResources.find((resource: { to?: string }) =>
       resource.to === 'BAI-Code-Runtime'
     )
 
@@ -266,7 +281,7 @@ describe('electron-builder BAI Work packaging', () => {
     expect(signedConfig.mac.timestamp).toBe('http://timestamp.apple.com/ts01')
   })
 
-  it('checks timestamp candidates across nested macOS signed code', () => {
+  itWithUnixPermissions('checks timestamp candidates across nested macOS signed code', () => {
     const root = tempRoot()
     const appBundle = join(root, 'BAI Work.app')
     const mainExecutable = join(appBundle, 'Contents/MacOS/BAI Work')

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createServer } from 'node:http'
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { defaultKunRuntimeSettings, type AppSettingsV1 } from '../../shared/app-settings'
 import {
   DEFAULT_BAI_BASE_URL,
@@ -15,6 +15,8 @@ import {
 vi.mock('../services/skill-service', () => ({
   listGuiSkills: vi.fn(async () => ({ ok: true, skills: [] }))
 }))
+
+const itWithPosixFakeCli = process.platform === 'win32' ? it.skip : it
 
 function settingsWithRuntimePatch(
   patch: Partial<ReturnType<typeof defaultKunRuntimeSettings>> = {}
@@ -109,7 +111,11 @@ describe('BAI Work runtime adapter', () => {
   it('prefers the bundled BAI Code runtime when present', () => {
     const bundled = baiWorkAdapterTestInternals.bundledBaiCodeCommand()
 
-    expect(bundled).toContain('resources/bai-code-runtime/bin/baicode')
+    if (process.platform === 'darwin' && process.arch === 'x64') {
+      expect(bundled).toContain('resources/bai-code-runtime/bin/baicode')
+    } else {
+      expect(bundled).toBeNull()
+    }
   })
 
   it('maps official BAI Code wheels and venv executables for Apple Silicon and Windows', () => {
@@ -145,9 +151,9 @@ describe('BAI Work runtime adapter', () => {
   })
 
   it('adds user bin directories to the runtime PATH for local tools such as RTK', () => {
-    const path = baiWorkAdapterTestInternals.runtimeSearchPath('/usr/bin:/bin')
+    const path = baiWorkAdapterTestInternals.runtimeSearchPath(['/usr/bin', '/bin'].join(delimiter))
 
-    expect(path.split(':')).toEqual(expect.arrayContaining([
+    expect(path.split(delimiter)).toEqual(expect.arrayContaining([
       '/usr/bin',
       '/bin',
       join(homedir(), '.local', 'bin')
@@ -232,7 +238,7 @@ describe('BAI Work runtime adapter', () => {
     })
   })
 
-  it('serves thread APIs through the BAI Code CLI bridge when the CLI is available', async () => {
+  itWithPosixFakeCli('serves thread APIs through the BAI Code CLI bridge when the CLI is available', async () => {
     const tempRoot = join(process.cwd(), 'work', 'bai-adapter-test')
     const binPath = join(tempRoot, 'baicode')
     mkdirSync(tempRoot, { recursive: true })
@@ -254,7 +260,7 @@ describe('BAI Work runtime adapter', () => {
     }
   })
 
-  it('runs turns through the BAI Code CLI bridge and carries conversation context forward', async () => {
+  itWithPosixFakeCli('runs turns through the BAI Code CLI bridge and carries conversation context forward', async () => {
     const tempRoot = join(process.cwd(), 'work', 'bai-adapter-chat-test')
     const binPath = join(tempRoot, 'baicode')
     const argsLog = join(tempRoot, 'args.log')
@@ -384,7 +390,7 @@ if [ -f '${counterPath}' ]; then
     }
   })
 
-  it('publishes live CLI steps and estimated usage before a long turn completes', async () => {
+  itWithPosixFakeCli('publishes live CLI steps and estimated usage before a long turn completes', async () => {
     const tempRoot = join(process.cwd(), 'work', 'bai-adapter-live-progress-test')
     const workspace = join(tempRoot, 'new-workspace')
     const binPath = join(tempRoot, 'baicode')
@@ -444,7 +450,7 @@ echo "BAI Work 已完成报告。"
     }
   })
 
-  it('compresses BAI Code streaming tracebacks into a user-safe connection error', async () => {
+  itWithPosixFakeCli('compresses BAI Code streaming tracebacks into a user-safe connection error', async () => {
     const tempRoot = join(process.cwd(), 'work', 'bai-adapter-failure-test')
     const binPath = join(tempRoot, 'baicode')
     mkdirSync(tempRoot, { recursive: true })
