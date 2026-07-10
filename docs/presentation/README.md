@@ -74,13 +74,15 @@ open docs/presentation/.artifact-work/BAI-Work-Project-Deck-montage.webp
 
 ## Validation Result
 
-Last checked on 2026-07-09:
+Last checked on 2026-07-10:
 
 - `node docs/presentation/deck-source.mjs`: passed and generated 22 slides.
 - Artifact-tool PNG previews: passed, 22 preview PNG files written under `.artifact-work/preview/`.
 - Layout bounds check: passed; all exported layout bounding boxes are within the 1280 x 720 slide canvas.
 - PPTX slide count check: passed; the archive contains 22 `ppt/slides/slide*.xml` files.
 - `unzip -t docs/presentation/BAI-Work-Project-Deck.pptx`: passed with no compressed data errors.
+- Slides 16, 19, 20, 21, and 22 were visually checked after the native Mac
+  Apple Silicon and Windows x64 release results were added.
 - `slides_test.py` and `render_slides.py`: attempted, but this machine is missing the Python `pdf2image` package required by those helper scripts.
 
 ## Notes

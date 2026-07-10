@@ -8,8 +8,8 @@
 
 - `main` 是当前开发与发布分支。
 - 对于稍大一些的改动，建议使用短期功能分支。
-- 当前产品迭代先验证 Mac Intel / x64。
-- Apple Silicon 和 Windows 构建等 Intel 版本稳定后再继续验证。
+- 原生发布验证覆盖 Mac Intel x64、Mac Apple Silicon arm64 和 Windows x64。
+- 各平台产物必须在匹配架构的 GitHub-hosted runner 上构建并完成启动冒烟。
 
 ## 推荐流程
 
@@ -60,14 +60,16 @@ npm run test
 npm run dev
 ```
 
-当前迭代涉及打包时，验证 Mac Intel 目录构建：
+涉及打包时，按目标平台执行：
 
 ```bash
 npm run dist:mac:dir
-file "dist/mac/BAI Work.app/Contents/MacOS/BAI Work"
+npm run dist:mac:arm64
+npm run dist:win
 ```
 
-可执行文件应显示 `Mach-O 64-bit executable x86_64`。
+Mac 与 Windows 发布工作流还会验证可执行文件架构、BAI Code 包内资源、
+离线 wheel 安装，以及成品应用的 `/health` 启动冒烟。
 
 ## PR 质量标准
 
@@ -120,13 +122,14 @@ PR 描述建议至少包含：
 
 ## 发布说明
 
-当前本地发布重点：
+发布命令：
 
-- `npm run dist:mac:dir`：Mac Intel 目录冒烟构建
-- `npm run dist:mac`：Mac Intel dmg/zip 产物
-- `npm run release:mac`：Mac Intel GitHub release 流程
+- `npm run dist:mac`：Mac Intel DMG/ZIP 产物
+- `npm run dist:mac:arm64`：Mac Apple Silicon DMG/ZIP 产物
+- `npm run dist:win`：Windows x64 NSIS 安装器
 
-Apple Silicon 和 Windows 发布路径仍保留为辅助脚本，但在 Mac Intel 构建稳定之前不是默认迭代目标。
+权威发布验证分别由 `.github/workflows/release.yml`、
+`release-mac-arm64.yml` 和 `release-windows.yml` 在原生 runner 上执行。
 
 ## 分支命名建议
 

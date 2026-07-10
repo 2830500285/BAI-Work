@@ -151,7 +151,7 @@ const slides = [
     tracks: [
       ["Mac Intel x64", "随包包含 BAI-Code-Runtime\nCPython 3.11.15 + BAI Code 0.9.1\nbin/baicode 使用相对路径选择运行时"],
       ["Mac Apple Silicon arm64", "随包包含 BAI-Code-Official\n官方 macOS arm64 cp310-cp313 wheels\n目标机用 Python 3.10-3.13 创建本地 venv"],
-      ["Windows x64", "随包包含 BAI-Code-Official\n官方 win_amd64 cp310-cp313 wheels\n创建 app-local venv 后运行 baicode.exe"]
+      ["Windows x64", "随包包含 BAI-Code-Official\n官方 win_amd64 cp310-cp313 wheels\n在用户数据目录创建 venv 后运行 baicode.exe"]
     ]
   },
   {
@@ -203,11 +203,11 @@ const slides = [
   },
   {
     kind: "platforms",
-    title: "当前产品迭代只发布 Mac Intel，其他平台延后验证",
+    title: "0.1.0 已完成三个桌面平台的原生构建与启动验证",
     platforms: [
-      ["mac-x64", "BAI-Work-0.1.0-mac-x64.dmg\nBAI-Work-0.1.0-mac-x64.zip", "当前发布候选，包含 Intel runtime"],
-      ["mac-arm64", "暂缓发布", "Intel 版本稳定后再做真机验证"],
-      ["win-x64", "暂缓发布", "Intel 版本稳定后再做安装验证"]
+      ["mac-x64", "BAI-Work-0.1.0-mac-x64.dmg\nBAI-Work-0.1.0-mac-x64.zip", "Intel runner 验证，包含自持 runtime"],
+      ["mac-arm64", "BAI-Work-0.1.0-mac-arm64.dmg\nBAI-Work-0.1.0-mac-arm64.zip", "M1 runner 验证，使用官方 wheelhouse"],
+      ["win-x64", "BAI-Work-0.1.0-win-x64.exe", "Windows 2025 runner 验证，NSIS 安装器"]
     ]
   },
   {
@@ -238,7 +238,7 @@ const slides = [
     groups: [
       ["代码", ["npm run typecheck", "npm run test", "runtime / settings / EBAI focused tests"]],
       ["macOS", ["electron-builder mac x64", "codesign --verify", "DMG mount and app launch smoke"]],
-      ["后续平台", ["Mac arm64 真机 smoke", "Windows NSIS 安装 / 卸载", "wheelhouse venv bootstrap"]],
+      ["原生平台", ["Mac Intel x64 packaged smoke", "Mac arm64 M1 packaged smoke", "Windows x64 NSIS + runtime smoke"]],
       ["发布", ["latest.yml / latest-mac.yml check", "R2 upload and promote dry run", "SHA256 release parts check"]]
     ]
   },
@@ -247,14 +247,14 @@ const slides = [
     title: "当前可进入决策评审，但不应掩盖 service contract 风险",
     done: [
       "BAI Work 品牌、package metadata、icons 与 artifact 命名已落地。",
-      "Mac Intel x64 App、DMG、ZIP 与 bundled runtime 已完成真实 smoke。",
-      "BAI Code 0.9.1 的 Intel runtime 与官方 wheelhouse 分发路径已实现。",
+      "Mac Intel、Mac Apple Silicon 与 Windows x64 产物均完成原生 CI smoke。",
+      "BAI Code 0.9.1 的 Intel runtime 与两平台官方 wheelhouse 已完成离线安装验证。",
       "EBAI commands/rules/agents/hooks 映射与安全默认值已实现。"
     ],
     open: [
       "官方 BAI Code desktop service contract 尚需确认。",
-      "签名、公证和真实设备 CI 仍需发布前闭环。",
-      "Mac arm64 与 Windows x64 将在 Intel 版本稳定后继续迭代。",
+      "Developer ID、公证与 Windows 代码签名仍需凭据闭环。",
+      "Windows NSIS 的人工安装、升级与卸载体验仍需真实桌面回归。",
       "目标机 Python 3.10-3.13 缺失时的引导体验需要继续打磨。"
     ]
   },
@@ -265,14 +265,14 @@ const slides = [
       ["1", "确认 service contract", "对齐 serve、session、event、permission、question 的官方协议与错误语义。"],
       ["2", "替换桥接实现", "保留 renderer /v1/* 边界，把 CLI bridge 迁移到真实 BAI Code service。"],
       ["3", "完善发布签名", "Developer ID、notarization、Windows signing 和更新通道联动验证。"],
-      ["4", "建设真机 CI", "mac x64、mac arm64、Windows x64 构建与安装 smoke 自动化。"],
+      ["4", "持续维护原生 CI", "保持 mac x64、mac arm64、Windows x64 构建与启动 smoke 稳定。"],
       ["5", "优化安装体验", "Python 缺失、wheel bootstrap、日志定位和重试流程产品化。"]
     ]
   },
   {
     kind: "close",
     title: "建议把 BAI Work 作为 BAI Code 桌面发行层继续推进",
-    body: "当前工程已具备统一品牌、Mac Intel 包体、runtime 适配和安全策略基础。下一阶段的关键，不是继续扩展功能面，而是先把 Intel 版本稳定性、签名、公证和安装体验做到发布级，再恢复其他平台迭代。",
+    body: "当前工程已具备统一品牌、三平台原生产物、runtime 适配和安全策略基础。下一阶段的关键，是把签名、公证、Windows 人工安装回归和官方 service contract 对齐做到发布级。",
     ask: "决策点：批准进入 runtime contract 对齐与发布候选验证阶段。"
   }
 ];

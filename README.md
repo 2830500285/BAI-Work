@@ -16,7 +16,7 @@ BAI Work is a desktop agent workbench built around the BAI Code runtime. It focu
 - **BAI providers first**: built-in support for the official BAI API plus custom OpenAI-compatible providers.
 - **Project workflow**: project-scoped conversations, workspace selection, Git context, file references, side conversations, checkpoints, and review surfaces.
 - **Engineering guardrails**: bundled BAI Work guardrails and Hermes-derived skills, an EBAI mapping installer, installable Agent-Reach, and optional external MCP servers.
-- **Desktop app**: Mac Intel-first Electron application with packaged runtime resources and local-only service defaults.
+- **Desktop app**: native Mac Intel, Mac Apple Silicon, and Windows x64 Electron releases with local-only service defaults.
 
 ## Quick Start
 
@@ -25,10 +25,12 @@ npm install
 npm run dev
 ```
 
-For a packaged Mac Intel directory build:
+Platform release builds:
 
 ```bash
-npm run dist:mac:dir
+npm run dist:mac          # Mac Intel x64 DMG + ZIP
+npm run dist:mac:arm64    # Mac Apple Silicon DMG + ZIP
+npm run dist:win          # Windows x64 NSIS installer
 ```
 
 The app stores local preferences and runtime files under the BAI Work application data directory. API keys are treated as credentials and should not be committed.
@@ -47,7 +49,15 @@ The public BAI Code documentation currently documents the CLI but does not publi
 
 ## Release
 
-Current product iteration targets Mac Intel/x64 first. The default macOS build and release path produces `BAI-Work-${version}-mac-x64` artifacts. Apple Silicon and Windows helper scripts remain in the repository for later validation after the Intel build stabilizes.
+[BAI Work 0.1.0](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.0) is available for all three desktop targets:
+
+| Platform | Download | Runtime packaging |
+| --- | --- | --- |
+| macOS Intel x64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-x64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-x64.zip) | Self-contained BAI Code 0.9.1 runtime |
+| macOS Apple Silicon arm64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-arm64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-arm64.zip) | Official BAI Code wheelhouse |
+| Windows x64 | [NSIS installer](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-win-x64.exe) | Official BAI Code wheelhouse |
+
+Apple Silicon and Windows need Python 3.10-3.13 on the target machine. On first use, BAI Work creates a user-local virtual environment and installs BAI Code from the bundled offline wheelhouse. The current macOS builds are ad-hoc signed rather than notarized, and the Windows installer is unsigned.
 
 ## Notices
 

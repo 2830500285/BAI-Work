@@ -22,8 +22,8 @@ workflows.
 - **Engineering guardrails**: bundled BAI Work guardrails and Hermes-derived
   skills, an EBAI mapping installer, installable Agent-Reach, and optional
   external MCP servers.
-- **Desktop app**: macOS-first Electron application with packaged runtime
-  resources and local-only service defaults.
+- **Desktop app**: native Mac Intel, Mac Apple Silicon, and Windows x64
+  Electron releases with local-only service defaults.
 
 ## Quick Start
 
@@ -32,10 +32,12 @@ npm install
 npm run dev
 ```
 
-For a packaged macOS directory build:
+Platform release builds:
 
 ```bash
-npm run dist:mac:dir
+npm run dist:mac          # Mac Intel x64 DMG + ZIP
+npm run dist:mac:arm64    # Mac Apple Silicon DMG + ZIP
+npm run dist:win          # Windows x64 NSIS installer
 ```
 
 The app stores local preferences and runtime files under the BAI Work
@@ -65,9 +67,14 @@ report it; BAI Work does not invent a zero hit rate.
 
 ## Release
 
-Release artifacts use the `BAI-Work-${version}-${os}-${arch}` naming scheme.
-See `electron-builder.config.cjs` and `scripts/` for macOS, Windows, Linux, and
-R2 publishing helpers.
+[BAI Work 0.1.0](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.0)
+publishes native Mac Intel x64, Mac Apple Silicon arm64, and Windows x64
+artifacts. Intel ships a self-contained BAI Code 0.9.1 runtime. Apple Silicon
+and Windows ship the official offline wheelhouse and require Python 3.10-3.13
+to create a user-local virtual environment on first use.
+
+The current macOS builds are ad-hoc signed rather than notarized. The Windows
+installer is unsigned.
 
 ## Notices
 

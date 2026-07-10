@@ -9,8 +9,10 @@ around the default branch, pull requests, and release validation.
 
 - `main` is the active development and release branch.
 - Short-lived feature branches are encouraged for non-trivial changes.
-- The current product iteration validates Mac Intel / x64 first.
-- Apple Silicon and Windows builds should wait until the Intel build is stable.
+- Native release validation covers Mac Intel x64, Mac Apple Silicon arm64, and
+  Windows x64.
+- Platform artifacts must be built and smoke-tested on matching GitHub-hosted
+  runner architectures.
 
 ## Recommended Workflow
 
@@ -61,15 +63,17 @@ If your change affects runtime behavior or UI, also run:
 npm run dev
 ```
 
-For packaging work in the current iteration, verify the Mac Intel directory
-build:
+For packaging work, use the matching target:
 
 ```bash
 npm run dist:mac:dir
-file "dist/mac/BAI Work.app/Contents/MacOS/BAI Work"
+npm run dist:mac:arm64
+npm run dist:win
 ```
 
-The executable should report `Mach-O 64-bit executable x86_64`.
+Mac and Windows release workflows additionally validate the executable
+architecture, bundled BAI Code resources, offline wheel installation, and a
+packaged-app `/health` smoke.
 
 ## PR Quality Standard
 
@@ -122,14 +126,14 @@ Update documentation when changes affect:
 
 ## Release Notes
 
-Current local release focus:
+Release commands:
 
-- `npm run dist:mac:dir` for Mac Intel directory smoke builds
-- `npm run dist:mac` for Mac Intel dmg/zip artifacts
-- `npm run release:mac` for Mac Intel GitHub release flow
+- `npm run dist:mac` for Mac Intel DMG/ZIP artifacts
+- `npm run dist:mac:arm64` for Mac Apple Silicon DMG/ZIP artifacts
+- `npm run dist:win` for the Windows x64 NSIS installer
 
-Apple Silicon and Windows release paths remain available as helper scripts, but
-they are not the default iteration target until the Mac Intel build is stable.
+Authoritative release validation runs in `.github/workflows/release.yml`,
+`release-mac-arm64.yml`, and `release-windows.yml` on native runners.
 
 ## Suggested Branch Naming
 
