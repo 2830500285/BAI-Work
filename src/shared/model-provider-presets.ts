@@ -1,0 +1,378 @@
+import type {
+  ImageGenerationProtocol,
+  MusicGenerationProtocol,
+  ModelEndpointFormat,
+  ModelProviderImageCapabilityV1,
+  ModelProviderMusicCapabilityV1,
+  ModelProviderModelProfileV1,
+  ModelProviderProfileV1,
+  ModelProviderReasoningCapabilityV1,
+  ModelProviderSpeechCapabilityV1,
+  ModelProviderTextToSpeechCapabilityV1,
+  ModelProviderVideoCapabilityV1,
+  SpeechToTextProtocol,
+  TextToSpeechProtocol,
+  VideoGenerationProtocol
+} from './app-settings-types'
+
+export type ModelProviderPresetId = 'bai'
+
+export const TOKEN_PLAN_PROVIDER_ID_SUFFIX = '-token-plan'
+
+export type ModelProviderTokenPlanRegion = {
+  id: string
+  baseUrl: string
+}
+
+export type ModelProviderTokenPlanPreset = {
+  baseUrl: string
+  /** Regional clusters. When present, baseUrl must equal the first region's baseUrl. */
+  regions?: ModelProviderTokenPlanRegion[]
+  endpointFormat: ModelEndpointFormat
+  models: string[]
+  modelProfiles?: Record<string, ModelProviderModelProfileV1>
+  /** Speech capability served by the plan endpoint itself (baseUrl follows the plan baseUrl). */
+  speech?: {
+    protocol: SpeechToTextProtocol
+    models: string[]
+  }
+  image?: {
+    protocol: ImageGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  textToSpeech?: {
+    protocol: TextToSpeechProtocol
+    baseUrl?: string
+    models: string[]
+  }
+  music?: {
+    protocol: MusicGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  video?: {
+    protocol: VideoGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  /** Expected key prefix, e.g. "tp-". Hint only, never enforced. */
+  keyPrefix?: string
+  apiKeyUrl: string
+}
+
+export type ModelProviderPreset = {
+  id: ModelProviderPresetId
+  name: string
+  baseUrl: string
+  endpointFormat: ModelEndpointFormat
+  models: string[]
+  modelProfiles?: Record<string, ModelProviderModelProfileV1>
+  image?: {
+    protocol: ImageGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  speech?: {
+    protocol: SpeechToTextProtocol
+    baseUrl: string
+    models: string[]
+  }
+  textToSpeech?: {
+    protocol: TextToSpeechProtocol
+    baseUrl: string
+    models: string[]
+  }
+  music?: {
+    protocol: MusicGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  video?: {
+    protocol: VideoGenerationProtocol
+    baseUrl: string
+    models: string[]
+  }
+  tokenPlan?: ModelProviderTokenPlanPreset
+  docsUrl: string
+  apiKeyUrl: string
+}
+
+const BAI_REASONING: ModelProviderReasoningCapabilityV1 = {
+  supportedEfforts: ['off'],
+  defaultEffort: 'off',
+  requestProtocol: 'none'
+}
+
+export const MODEL_PROVIDER_PRESETS: ModelProviderPreset[] = [
+  {
+    id: 'bai',
+    name: 'BAI',
+    baseUrl: 'https://api.b.ai/v1',
+    endpointFormat: 'chat_completions',
+    models: [
+      'claude-sonnet-4-6',
+      'gpt-5.2',
+      'gpt-5-mini',
+      'gpt-5-nano',
+      'gemini-3-pro-preview',
+      'deepseek-v3.2',
+      'kimi-k2-thinking'
+    ],
+    modelProfiles: {
+      'claude-sonnet-4-6': baiTextChatProfile(200_000),
+      'gpt-5.2': baiTextChatProfile(400_000),
+      'gpt-5-mini': baiTextChatProfile(400_000),
+      'gpt-5-nano': baiTextChatProfile(400_000),
+      'gemini-3-pro-preview': baiVisionChatProfile(1_000_000),
+      'deepseek-v3.2': baiTextChatProfile(128_000),
+      'kimi-k2-thinking': baiTextChatProfile(256_000)
+    },
+    docsUrl: 'https://docs.b.ai/baicode/BAI-code-introduction/',
+    apiKeyUrl: 'https://b.ai/'
+  }
+]
+
+export function getModelProviderPreset(id: string): ModelProviderPreset | null {
+  return MODEL_PROVIDER_PRESETS.find((preset) => preset.id === id) ?? null
+}
+
+export function modelProviderPresetProfile(
+  preset: ModelProviderPreset,
+  apiKey = ''
+): ModelProviderProfileV1 {
+  return {
+    id: preset.id,
+    name: preset.name,
+    apiKey: apiKey.trim(),
+    baseUrl: preset.baseUrl,
+    endpointFormat: preset.endpointFormat,
+    models: [...preset.models],
+    modelProfiles: copyModelProfiles(preset.modelProfiles),
+    ...(preset.image ? { image: modelProviderPresetImageCapability(preset.image) } : {}),
+    ...(preset.speech ? { speech: modelProviderPresetSpeechCapability(preset.speech) } : {}),
+    ...(preset.textToSpeech
+      ? { textToSpeech: modelProviderPresetTextToSpeechCapability(preset.textToSpeech) }
+      : {}),
+    ...(preset.music ? { music: modelProviderPresetMusicCapability(preset.music) } : {}),
+    ...(preset.video ? { video: modelProviderPresetVideoCapability(preset.video) } : {})
+  }
+}
+
+export function tokenPlanProviderId(presetId: string): string {
+  return `${presetId}${TOKEN_PLAN_PROVIDER_ID_SUFFIX}`
+}
+
+export function modelProviderTokenPlanProfile(
+  preset: ModelProviderPreset,
+  apiKey = '',
+  baseUrl = ''
+): ModelProviderProfileV1 | null {
+  const tokenPlan = preset.tokenPlan
+  if (!tokenPlan) return null
+  const resolvedBaseUrl = baseUrl.trim() || tokenPlan.baseUrl
+  return {
+    id: tokenPlanProviderId(preset.id),
+    name: `${preset.name} Token Plan`,
+    apiKey: apiKey.trim(),
+    baseUrl: resolvedBaseUrl,
+    endpointFormat: tokenPlan.endpointFormat,
+    models: [...tokenPlan.models],
+    modelProfiles: copyModelProfiles(tokenPlan.modelProfiles),
+    ...(tokenPlan.image
+      ? {
+          image: {
+            protocol: tokenPlan.image.protocol,
+            baseUrl: tokenPlanCapabilityBaseUrl(tokenPlan, resolvedBaseUrl, tokenPlan.image.baseUrl),
+            models: [...tokenPlan.image.models]
+          }
+        }
+      : {}),
+    ...(tokenPlan.speech
+      ? {
+          speech: {
+            protocol: tokenPlan.speech.protocol,
+            baseUrl: resolvedBaseUrl,
+            models: [...tokenPlan.speech.models]
+          }
+        }
+      : {}),
+    ...(tokenPlan.textToSpeech
+      ? {
+          textToSpeech: {
+            protocol: tokenPlan.textToSpeech.protocol,
+            baseUrl: tokenPlanCapabilityBaseUrl(tokenPlan, resolvedBaseUrl, tokenPlan.textToSpeech.baseUrl),
+            models: [...tokenPlan.textToSpeech.models]
+          }
+        }
+      : {}),
+    ...(tokenPlan.music
+      ? {
+          music: {
+            protocol: tokenPlan.music.protocol,
+            baseUrl: tokenPlanCapabilityBaseUrl(tokenPlan, resolvedBaseUrl, tokenPlan.music.baseUrl),
+            models: [...tokenPlan.music.models]
+          }
+        }
+      : {}),
+    ...(tokenPlan.video
+      ? {
+          video: {
+            protocol: tokenPlan.video.protocol,
+            baseUrl: tokenPlanCapabilityBaseUrl(tokenPlan, resolvedBaseUrl, tokenPlan.video.baseUrl),
+            models: [...tokenPlan.video.models]
+          }
+        }
+      : {})
+  }
+}
+
+function tokenPlanCapabilityBaseUrl(
+  tokenPlan: ModelProviderTokenPlanPreset,
+  resolvedBaseUrl: string,
+  capabilityBaseUrl: string | undefined
+): string {
+  const fallback = capabilityBaseUrl?.trim() || resolvedBaseUrl
+  if (!capabilityBaseUrl?.trim()) return resolvedBaseUrl
+  const resolvedOrigin = urlOrigin(resolvedBaseUrl)
+  const capabilityOrigin = urlOrigin(capabilityBaseUrl)
+  if (!resolvedOrigin || !capabilityOrigin) return fallback
+  const planOrigins = [
+    tokenPlan.baseUrl,
+    ...(tokenPlan.regions?.map((region) => region.baseUrl) ?? [])
+  ].map(urlOrigin).filter((origin): origin is string => Boolean(origin))
+  if (!planOrigins.includes(capabilityOrigin)) return fallback
+  return replaceUrlOrigin(capabilityBaseUrl, resolvedOrigin)
+}
+
+function urlOrigin(value: string | undefined): string | null {
+  if (!value?.trim()) return null
+  try {
+    return new URL(value.trim()).origin
+  } catch {
+    return null
+  }
+}
+
+function replaceUrlOrigin(value: string, origin: string): string {
+  try {
+    const url = new URL(value.trim())
+    const path = url.pathname.replace(/\/+$/, '')
+    return `${origin}${path === '/' ? '' : path}${url.search}`
+  } catch {
+    return value.trim()
+  }
+}
+
+function baiTextChatProfile(contextWindowTokens: number): ModelProviderModelProfileV1 {
+  return textChatProfile(contextWindowTokens, BAI_REASONING)
+}
+
+function baiVisionChatProfile(contextWindowTokens: number): ModelProviderModelProfileV1 {
+  return visionChatProfile(contextWindowTokens, BAI_REASONING)
+}
+
+function textChatProfile(
+  contextWindowTokens?: number,
+  reasoning?: ModelProviderReasoningCapabilityV1
+): ModelProviderModelProfileV1 {
+  return {
+    ...(contextWindowTokens ? { contextWindowTokens } : {}),
+    inputModalities: ['text'],
+    outputModalities: ['text'],
+    supportsToolCalling: true,
+    messageParts: ['text'],
+    ...(reasoning ? { reasoning } : {})
+  }
+}
+
+function visionChatProfile(
+  contextWindowTokens?: number,
+  reasoning?: ModelProviderReasoningCapabilityV1
+): ModelProviderModelProfileV1 {
+  return {
+    ...(contextWindowTokens ? { contextWindowTokens } : {}),
+    inputModalities: ['text', 'image'],
+    outputModalities: ['text'],
+    supportsToolCalling: true,
+    messageParts: ['text', 'image_url'],
+    ...(reasoning ? { reasoning } : {})
+  }
+}
+
+function copyModelProfiles(
+  profiles: Record<string, ModelProviderModelProfileV1> | undefined
+): Record<string, ModelProviderModelProfileV1> {
+  if (!profiles) return {}
+  return Object.fromEntries(
+    Object.entries(profiles).map(([modelId, profile]) => [
+      modelId,
+      {
+        ...profile,
+        ...(profile.aliases ? { aliases: [...profile.aliases] } : {}),
+        inputModalities: [...profile.inputModalities],
+        outputModalities: [...profile.outputModalities],
+        messageParts: [...profile.messageParts],
+        ...(profile.reasoning
+          ? {
+              reasoning: {
+                supportedEfforts: [...profile.reasoning.supportedEfforts],
+                defaultEffort: profile.reasoning.defaultEffort,
+                requestProtocol: profile.reasoning.requestProtocol
+              }
+            }
+          : {})
+      }
+    ])
+  )
+}
+
+function modelProviderPresetImageCapability(
+  capability: NonNullable<ModelProviderPreset['image']>
+): ModelProviderImageCapabilityV1 {
+  return {
+    protocol: capability.protocol,
+    baseUrl: capability.baseUrl,
+    models: [...capability.models]
+  }
+}
+
+function modelProviderPresetSpeechCapability(
+  capability: NonNullable<ModelProviderPreset['speech']>
+): ModelProviderSpeechCapabilityV1 {
+  return {
+    protocol: capability.protocol,
+    baseUrl: capability.baseUrl,
+    models: [...capability.models]
+  }
+}
+
+function modelProviderPresetTextToSpeechCapability(
+  capability: NonNullable<ModelProviderPreset['textToSpeech']>
+): ModelProviderTextToSpeechCapabilityV1 {
+  return {
+    protocol: capability.protocol,
+    baseUrl: capability.baseUrl,
+    models: [...capability.models]
+  }
+}
+
+function modelProviderPresetMusicCapability(
+  capability: NonNullable<ModelProviderPreset['music']>
+): ModelProviderMusicCapabilityV1 {
+  return {
+    protocol: capability.protocol,
+    baseUrl: capability.baseUrl,
+    models: [...capability.models]
+  }
+}
+
+function modelProviderPresetVideoCapability(
+  capability: NonNullable<ModelProviderPreset['video']>
+): ModelProviderVideoCapabilityV1 {
+  return {
+    protocol: capability.protocol,
+    baseUrl: capability.baseUrl,
+    models: [...capability.models]
+  }
+}

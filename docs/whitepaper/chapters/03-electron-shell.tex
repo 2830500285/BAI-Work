@@ -1,0 +1,127 @@
+\chapter{Electron/Vite/React 主壳}
+\section{本章摘要}
+本章说明 桌面主壳 在 BAI Work 技术体系中的位置。核心关键词包括 主进程生命周期、渲染进程体验、preload API、受控 IPC 和 schema 校验。本章内容以仓库当前实现为准, 以公开 BAI Code 安装资料为边界, 不把未公开的桌面本地 HTTP 协议写成既定官方契约。
+
+\section{背景与目标}
+本章聚焦桌面主壳。BAI Work 的设计起点不是重新发明一个孤立桌面客户端, 而是在 BAI Code 能力之上提供稳定的本地工作台。项目已经完成 BAI Work 独立品牌整理, 对外使用 BAI Work 名称, 对运行时使用 BAI Code 叙事, 对内部遗留命名采取兼容解释。这个选择的核心价值在于减少用户认知切换: 用户看到的是一个面向代码、调试、架构、文档、规划、评审、自动化和工具协同的桌面应用, 维护者看到的是一个可以逐步替换 runtime 后端而不破坏渲染层体验的壳层。
+
+桌面主壳的目标可以概括为三点。第一, 保持桌面体验稳定, 让会话列表、消息流、工具结果、项目选择、模型设置和权限提示在不同运行时状态下有一致入口。第二, 尊重 BAI Code 公开文档的边界, 公开文档已经覆盖 baicode CLI、Python wheel 安装以及 OpenAI-compatible LLM 参数, 但没有公开桌面本地 HTTP service/session/event/permission/question 协议, 因此白皮书只能把当前实现写成 BAI Work 自有兼容桥和待确认协议缺口。第三, 将构建发布、凭据保护、EBAI 映射和 hooks 安全策略写成可执行工程约束, 便于后续团队按相同标准扩展。
+
+凭据来源有优先级。运行时会从 BAI credential settings、runtime override、selected provider profile、环境变量 BAI\_API\_KEY/BAI\_BASE\_URL/BAI\_MODEL 和默认值中解析有效配置。这个模型既允许设置页配置, 也允许调试时用环境变量覆盖, 但生产文档必须提醒不要把真实密钥写入脚本、截图或日志。
+
+compatibility bridge 不是协议承诺, 而是过渡层。它在 /health 返回服务状态, 在 /v1/runtime/info 返回 provider、capabilities、sandboxMode、approvalPolicy 等信息, 在 /v1/threads 管理内存中的 thread 和 turn, 并通过 text/event-stream 输出 item\_updated、tool\_call\_started、tool\_call\_finished、assistant\_text\_delta、turn\_completed 等桌面事件。
+
+\section{仓库证据}
+本白皮书基于当前仓库文件和公开 BAI Code 安装资料整理。关键证据包括: README.md 与 README.en.md 对产品定位, runtime 边界和官方契约缺口做了直接描述。 electron-builder.config.cjs 定义 extraResources, artifactName, mac/win/linux target 和 BAI\_WORK\_BUNDLE\_BAI\_CODE\_RUNTIME/BAI\_WORK\_BUNDLE\_BAI\_CODE\_OFFICIAL 的默认逻辑。 src/main/runtime/bai-work-adapter.ts 定义 DEFAULT\_BAI\_CODE\_COMMAND, DEFAULT\_BAI\_BASE\_URL, DEFAULT\_BAI\_MODEL, BAI-Code-Runtime, BAI-Code-Official, wheelhouse venv 准备流程和 /v1/* 兼容服务。 src/shared/app-settings-types.ts, src/shared/app-settings-provider.ts, src/shared/model-provider-presets.ts 描述 Provider, endpoint format, model profile, multimodal capability 和默认 BAI 预设。 src/main/services/ecc-mapping-service.ts 与对应测试描述 EBAI commands, agents, rules, hooks 的安装目标和启用约束。 resources/bai-code-runtime/README.md 记录 Intel runtime 使用 BAI Code 0.9.1 与 CPython 3.11.15 x86\_64。 resources/bai-code-official/README.md 记录 official wheels 来源, Python 3.10-3.13 要求, macOS arm64 和 Windows win\_amd64 wheelhouse 覆盖范围。 这些文件共同给出一个明确事实: 当前项目已经完成品牌切换、runtime 适配、wheelhouse 打包和 EBAI 映射的主要工程路径, 但仍保留若干历史 ABI 名称。文档在描述这些名称时使用“内部兼容名”或“设置迁移名”, 不把它们当作对外产品名称。
+
+对外文档应避免两类错误。第一类是把未公开的 BAI Code 桌面 HTTP 协议当作既成事实, 这会误导二次开发者直接依赖不存在或未承诺的接口。第二类是把当前兼容桥误读成完整 BAI Code 服务实现, 这会掩盖 CLI bridge 在 approvals、questions、resume session、tool-level semantic events 上的能力差距。白皮书采用更保守的写法: 能从代码和资源中核对的写成当前实现, 只能由路线图推导的写成演进方向, 官方未公开的写成待确认。
+
+OpenAI chat bridge 由 BAI\_WORK\_USE\_OPENAI\_CHAT\_BRIDGE=1 控制, 使用 chat/completions, stream=true, temperature=0, max\_tokens=1024。它能验证 OpenAI-compatible endpoint 路径和模型调用, 但不提供 BAI Code CLI 的本地工程执行语义。
+
+历史兼容接口需要文档化治理。当前实现保留若干旧 schema 与 preload ABI, 用于稳定存量设置迁移。白皮书面向外部读者统一使用 BAI Work/BAI Code, 面向维护者时说明这些兼容接口的边界, 防止误删导致迁移失败。
+
+\section{关键设计}
+在桌面主壳中, 设计约束来自产品目标、运行时现实和发布形态三方面。产品目标要求桌面壳对用户呈现完整工作台, 包括项目上下文、模型选择、长任务对话、侧边会话、文件引用和生成物管理。运行时现实要求兼容 baicode CLI 与 OpenAI-compatible endpoint, 同时不宣称拥有官方未公开的 session/event/permission/question 协议。发布形态要求 Intel、Apple Silicon、Windows 三类构建拥有不同的 runtime 资源策略, 但用户入口保持一致。
+
+本章涉及的重点包括: 主进程生命周期、渲染进程体验、preload API、受控 IPC 和 schema 校验。这些重点之间存在明确依赖关系: 打包策略决定可用 runtime, runtime 能力决定本地 /v1/* 兼容层能否完整响应, 兼容层能力决定渲染层可以展示哪些状态和按钮, 安全策略决定哪些命令、hooks、文件访问和凭据路径必须默认收敛。BAI Work 的当前实现倾向于先稳定桌面壳, 再等待 BAI Code 官方契约成熟后替换兼容桥内部实现。
+
+EBAI 安装器会阻止 symlink 内容进入 rules skill, 复制目录时使用 verbatimSymlinks=false 并在发现 symlink 时抛错。这个细节很重要, 因为规则包来自外部仓库, 如果允许符号链接, 可能把用户不期待的本地路径打包到技能目录。
+
+运行时能力必须明确区分 available、unavailable 和 disabled。available 表示当前路径可用, unavailable 表示能力应该存在但受当前 runtime 或依赖限制不可用, disabled 表示产品在当前模式下不启用该能力。这个区分能帮助 UI 给出准确按钮状态和错误提示。
+
+\section{目标用户与使用场景}
+前端工程师、Electron 维护者 是本章最直接的读者。对这些读者而言, BAI Work 不只是一个聊天窗口, 而是本地工程活动的控制台。软件工程师关注是否能在项目目录内启动任务、读取上下文、运行必要命令并整理结果。发布维护者关注 runtime 资源是否随包交付, Python 版本是否满足 wheelhouse 要求, 构建产物命名是否稳定。安全人员关注 API key 是否只作为凭据处理, hooks 是否默认禁用, workspace 作用域是否明确。
+
+典型使用场景包括本地代码修改、仓库评审、技术方案草拟、文档生成、调试辅助、自动化任务和跨渠道任务触发。不同场景对权限的要求不同: 文档草拟可以只需要模型调用和文件读取, 代码修改需要 workspace-write, shell 命令需要更高访问级别, hooks 则必须以受信任 workspace 为前提。白皮书把这些场景拆开描述, 目的是让用户在启用能力前知道能力边界, 让维护者在实现新功能时知道默认安全姿态。
+
+凭据来源有优先级。运行时会从 BAI credential settings、runtime override、selected provider profile、环境变量 BAI\_API\_KEY/BAI\_BASE\_URL/BAI\_MODEL 和默认值中解析有效配置。这个模型既允许设置页配置, 也允许调试时用环境变量覆盖, 但生产文档必须提醒不要把真实密钥写入脚本、截图或日志。
+
+compatibility bridge 不是协议承诺, 而是过渡层。它在 /health 返回服务状态, 在 /v1/runtime/info 返回 provider、capabilities、sandboxMode、approvalPolicy 等信息, 在 /v1/threads 管理内存中的 thread 和 turn, 并通过 text/event-stream 输出 item\_updated、tool\_call\_started、tool\_call\_finished、assistant\_text\_delta、turn\_completed 等桌面事件。
+
+\section{实现说明}
+当前实现中, 桌面主壳不是孤立模块, 而是跨主进程、渲染进程、共享设置和资源目录共同组成。主进程负责 runtime 探测、compatibility server、IPC handler、发布资源定位和本地文件写入。渲染进程负责工作台 UI、设置页、slash command 菜单、插件技能市场和用户交互。共享层负责类型、schema、Provider profile、endpoint format、默认值和路径规范。资源目录提供 bundled runtime、official wheelhouse、skills 和品牌资产。
+
+这种分层有一个实用优点: 当 BAI Code 官方服务契约尚未公开时, 渲染层不必频繁改动。它仍然调用稳定的本地 /v1/* 桌面边界, 主进程可以在内部从 CLI bridge、OpenAI chat bridge 或将来的官方 service bridge 之间切换。这个边界也有代价: 兼容层必须诚实暴露 unavailable、disabled 或 unsupported 状态, 避免 UI 把尚未实现的 approvals、questions、resume-session 能力伪装成可用。
+
+OpenAI chat bridge 由 BAI\_WORK\_USE\_OPENAI\_CHAT\_BRIDGE=1 控制, 使用 chat/completions, stream=true, temperature=0, max\_tokens=1024。它能验证 OpenAI-compatible endpoint 路径和模型调用, 但不提供 BAI Code CLI 的本地工程执行语义。
+
+历史兼容接口需要文档化治理。当前实现保留若干旧 schema 与 preload ABI, 用于稳定存量设置迁移。白皮书面向外部读者统一使用 BAI Work/BAI Code, 面向维护者时说明这些兼容接口的边界, 防止误删导致迁移失败。
+
+\section{安全与合规考量}
+安全策略采用最小惊讶原则。API key 不写入文档示例, 不写入日志, 不提交仓库, 示例统一使用 BAI\_API\_KEY=your-key。本地服务默认绑定 127.0.0.1, 避免暴露到局域网。运行时信息只报告 apiKeyConfigured 这样的布尔值, 不回显密钥。CLI 输出清理阶段会对当前配置中的 API key 做替换, 以降低错误展示凭据的风险。
+
+EBAI hooks 是最高风险能力之一, 因为 hooks 本质上会执行本地 shell 命令。BAI Work 的安装器默认只在用户目录生成 disabled manifest, 并写入提示文档。启用 hooks 时必须提供 workspace, 结果写入该 workspace 下的 .bai/hooks.toml, 且 enabled = true 只存在于该受信任 workspace。这个策略不能消除 hooks 自身风险, 但能降低“安装即全局执行”的误用概率。
+
+EBAI 安装器会阻止 symlink 内容进入 rules skill, 复制目录时使用 verbatimSymlinks=false 并在发现 symlink 时抛错。这个细节很重要, 因为规则包来自外部仓库, 如果允许符号链接, 可能把用户不期待的本地路径打包到技能目录。
+
+运行时能力必须明确区分 available、unavailable 和 disabled。available 表示当前路径可用, unavailable 表示能力应该存在但受当前 runtime 或依赖限制不可用, disabled 表示产品在当前模式下不启用该能力。这个区分能帮助 UI 给出准确按钮状态和错误提示。
+
+\section{运维与发布影响}
+桌面主壳会直接影响构建和现场部署。Mac Intel x64 可以依赖随包交付的 BAI-Code-Runtime, 该资源内含 baicode 入口和相对路径 Python/site-packages。Mac Apple Silicon arm64 与 Windows x64 走 official wheelhouse 路线, 目标机如果没有 Python 3.10-3.13, 应用无法创建本地 venv, 需要用户安装 Python 或在设置中指定已有 baicode 可执行文件。
+
+发布侧需要关注 electron-builder 的条件打包逻辑。BAI\_WORK\_BUNDLE\_BAI\_CODE\_RUNTIME 默认只在 darwin x64 打开, BAI\_WORK\_BUNDLE\_BAI\_CODE\_OFFICIAL 默认在 darwin arm64 和 win32 x64 打开。artifactName 采用 BAI-Work-{version}-{os}-{arch}.{ext}, update channel 只接受 stable 或 frontier。白皮书不把这些变量写成用户必须配置的运行条件, 而是写成发布工程可调整的构建参数。
+
+凭据来源有优先级。运行时会从 BAI credential settings、runtime override、selected provider profile、环境变量 BAI\_API\_KEY/BAI\_BASE\_URL/BAI\_MODEL 和默认值中解析有效配置。这个模型既允许设置页配置, 也允许调试时用环境变量覆盖, 但生产文档必须提醒不要把真实密钥写入脚本、截图或日志。
+
+compatibility bridge 不是协议承诺, 而是过渡层。它在 /health 返回服务状态, 在 /v1/runtime/info 返回 provider、capabilities、sandboxMode、approvalPolicy 等信息, 在 /v1/threads 管理内存中的 thread 和 turn, 并通过 text/event-stream 输出 item\_updated、tool\_call\_started、tool\_call\_finished、assistant\_text\_delta、turn\_completed 等桌面事件。
+
+\section{边界、限制与后续演进}
+当前最大限制仍是官方桌面服务契约未公开。BAI Work 可以调用 baicode CLI, 可以用 OpenAI-compatible chat completions 做有限 bridge, 可以为渲染层模拟 thread/turn/event 结构, 但不能声称已经获得官方 session/event/permission/question 协议。这个限制影响恢复会话、细粒度权限审批、问题回传、真实工具事件映射、长期存储和多客户端同步。
+
+后续演进应遵循两条线。第一条是产品线: 统一品牌语言、简化设置项、提高错误可读性、完善缺少 Python 或缺少 API key 时的引导。第二条是工程线: 在官方契约发布后替换 compatibility bridge 内部实现, 保留 renderer 边界, 增加协议测试, 增加跨平台安装 smoke test, 补齐 hooks 审计和 Provider 能力探测。
+
+OpenAI chat bridge 由 BAI\_WORK\_USE\_OPENAI\_CHAT\_BRIDGE=1 控制, 使用 chat/completions, stream=true, temperature=0, max\_tokens=1024。它能验证 OpenAI-compatible endpoint 路径和模型调用, 但不提供 BAI Code CLI 的本地工程执行语义。
+
+历史兼容接口需要文档化治理。当前实现保留若干旧 schema 与 preload ABI, 用于稳定存量设置迁移。白皮书面向外部读者统一使用 BAI Work/BAI Code, 面向维护者时说明这些兼容接口的边界, 防止误删导致迁移失败。
+
+\section{工程判定清单}
+\begin{itemize}
+  \item 对外文案必须使用 BAI Work 和 BAI Code, 历史兼容名称只作为兼容名解释。
+  \item 所有示例凭据必须使用占位符, 例如 BAI\_API\_KEY=your-key。
+  \item 涉及 session、event、permission、question 的官方协议时必须写明“待官方公开契约确认”。
+  \item 涉及 hooks 时必须写明默认 disabled, 启用必须 trusted workspace scoped。
+  \item 涉及 Apple Silicon 或 Windows runtime 时必须写明 Python 3.10-3.13 要求。
+\end{itemize}
+
+\section{专项展开: 界面与边界}
+Electron 主壳的关键不是窗口本身, 而是把本地能力转换为可审计的桌面操作。preload 暴露的 API 应保持窄接口, renderer 不直接访问 Node 文件系统或进程能力。设置保存、runtime 请求、SSE 订阅、Provider 探测、EBAI 安装、技能列表和本地路径打开都通过 IPC handler。handler 再通过 zod schema 或共享类型进行输入约束。这个结构可以降低渲染层被注入脚本滥用本地能力的风险, 也方便后续把危险操作集中到主进程做审计、确认和错误归一化。
+
+从维护视角看, 桌面主壳需要持续回答四个问题。第一, 用户看到的能力是否已经由当前代码或资源支撑。第二, 失败时是否给出可执行的恢复路径。第三, 默认配置是否保护本地文件、凭据和工作区。第四, 新增能力是否会扩大打包、启动、权限或协议依赖。BAI Work 当前处在品牌切换和 runtime 适配并行推进阶段, 因此文档必须把“当前实现”“兼容层”“待确认官方契约”和“路线图”分开写。只有这样, 后续维护者才能在不破坏用户体验的前提下替换内部实现。
+
+对用户而言, 桌面主壳最重要的是可预测性。应用启动后应该能说明 runtime 是否可用, baicode 是否可探测, API key 是否已配置, Provider base URL 是否明确, workspace 是否已选择, 以及当前权限是否允许文件修改和命令执行。对发布团队而言, 可预测性意味着构建参数、资源目录、产物名称、签名状态和 update channel 都可复现。对安全团队而言, 可预测性意味着 hooks 不会在用户不知情的情况下执行, 凭据不会出现在日志或文档中, 本地服务不会监听外部网卡。
+
+在实现层面, 桌面主壳还应避免把历史兼容当作永久架构。兼容名可以保留, 因为它们保护旧设置和旧 ABI, 但新增文档、错误提示和用户界面应尽量使用 BAI Work/BAI Code 术语。compatibility bridge 可以保留, 因为它保护 renderer 稳定边界, 但它内部的模拟 thread store、CLI 输出整理和 unavailable route 必须随着官方契约成熟而替换。EBAI 映射可以保留, 因为它帮助用户迁移已有规则资产, 但 hooks 必须继续采用默认禁用和受信任 workspace 作用域。
+
+验收 桌面主壳 的方式也应具体。文档验收看是否列明路径、默认值、限制和恢复步骤。代码验收看是否有单元测试覆盖成功路径和失败路径。发布验收看目标平台是否包含预期资源, Intel 包是否包含 BAI-Code-Runtime, Apple Silicon 和 Windows 包是否包含 BAI-Code-Official, wheelhouse 是否覆盖 cp310 到 cp313。安全验收看是否没有真实密钥, 是否没有把 hooks 写成默认启用, 是否没有把未公开协议写成官方承诺。
+
+这些要求共同形成 BAI Work 的文档纪律: 宁可把不确定性写清楚, 也不为了完整感补齐不存在的协议细节。宁可把跨平台差异写复杂一点, 也不让 Apple Silicon 或 Windows 用户误以为无需 Python。宁可把 hooks 风险重复说明, 也不让用户把外部命令包当作普通提示词资产。宁可承认内部命名仍在迁移, 也不为了品牌统一在代码层做高风险重命名。
+
+\section{维护者补充说明}
+
+维护者在处理桌面主壳相关变更时, 应先确认变更是否直接服务用户请求或当前路线图。BAI Work 已经有较多跨层能力, 包括桌面 UI、运行时桥接、Provider 设置、技能市场、EBAI 安装、发布脚本和多平台资源。任何看似简单的改动, 都可能影响打包产物、首启流程、设置迁移或安全默认值。比如修改默认模型会影响 Provider preset、runtime config、composer 默认值和文档示例。修改数据目录会影响 venv 缓存、工作区默认路径和用户已有状态。修改 hooks 事件映射会影响外部命令执行时机。
+
+因此, 白皮书把桌面主壳写成可维护对象, 而不是一次性说明文字。每个章节都应帮助读者回答“当前版本如何工作”“为什么这样设计”“哪里不能承诺”“如何验证”“下一步如何演进”。这种写法会比营销式介绍更长, 但能减少后续误解。特别是在 BAI Code 官方桌面 service 契约尚未公开的阶段, 文档越需要克制: 可以写 BAI Work 当前有 compatibility bridge, 可以写 renderer 依赖 /v1/* 桌面边界, 可以写某些 route 返回 unsupported 或 unavailable, 但不能写官方已经承诺这些 HTTP path。
+
+在团队协作中, 桌面主壳还需要形成检查清单。提交前检查是否修改了写入范围之外的文件, 是否引入真实凭据, 是否把示例 key 写成真实格式, 是否使用了不适合 XeLaTeX 的字符, 是否让 README 的编译命令与实际目录不一致, 是否让 references.bib 引用不存在来源。发布前检查包内是否存在预期资源, Intel 包是否有 BAI-Code-Runtime, arm64 和 Windows 包是否有 BAI-Code-Official, Windows 安装器是否保留用户 app data, macOS 包是否使用正确图标和 entitlements。
+
+从用户教育角度看, 桌面主壳应使用直接语言。用户不需要知道每一个内部函数名, 但需要知道配置 API key 后会发生什么, 缺少 Python 时该做什么, 开启 hooks 前要信任什么, 自定义 Provider 需要满足什么接口形态, 为什么某些权限或问题功能当前不可用。白皮书把这些解释写入正文, 是为了让产品、开发、测试、安全和发布团队在同一份材料上形成共识。
+
+\section{验收与交付说明}
+桌面主壳的交付验收应同时覆盖文档、代码、打包和安全四个层面。文档层面要求章节描述与仓库事实一致, 不出现聊天痕迹, 不出现真实凭据, 不把待确认协议写成官方能力。代码层面要求相关实现能在仓库中找到对应文件, 例如运行时适配应能追溯到主进程 adapter, Provider 能力应能追溯到共享设置和 preset, EBAI 行为应能追溯到安装服务和测试。打包层面要求目标平台资源与构建配置一致, 不把 Intel runtime 和 official wheelhouse 的适用平台混写。安全层面要求 hooks、shell、workspace、API key 和本地端口都有明确默认值和风险说明。
+
+交付给新开发者时, 桌面主壳章节应帮助其快速判断自己要改哪里。如果要调整用户界面, 先看渲染层和共享文案。如果要调整本地 runtime, 先看主进程 adapter 和运行时设置。如果要调整模型列表, 先看 Provider preset 和能力 profile。如果要调整 EBAI 安装, 先看服务实现和测试。如果要调整发布产物, 先看 electron-builder 配置和 release 脚本。这样的路径说明能减少盲目搜索, 也能减少跨目录误改。
+
+交付给产品和安全评审时, 桌面主壳章节应说明取舍原因。BAI Work 选择本地 compatibility bridge, 是为了在官方桌面服务契约尚未公开时保持桌面体验连续。BAI Work 选择 wheelhouse 加目标机 Python, 是为了在 Apple Silicon 和 Windows 上复用官方 BAI Code wheel 安装模型。BAI Work 选择 hooks 默认禁用, 是因为外部 hooks 会执行本地命令。BAI Work 保留部分历史内部命名, 是因为设置迁移和 ABI 稳定比一次性重命名更重要。
+
+交付后的维护还需要周期性复查。每当 BAI Code 官方文档更新、wheel 版本变化、Provider 模型列表变化、Electron 或 electron-builder 升级、Windows 安装器策略变化、macOS 签名要求变化、EBAI 上游结构变化时, 白皮书都应同步更新。否则文档会从工程证据变成历史快照。维护者应优先更新事实性段落、命令、路径、默认值和已知限制, 再考虑扩展路线图。
+
+\section{术语一致性说明}
+桌面主壳章节使用的术语应与整份白皮书保持一致。对外统一写 BAI Work、BAI Code、BAI provider、BAI-Code-Runtime、BAI-Code-Official。涉及历史实现时, 可以写内部兼容名、设置迁移名或旧 ABI 名, 但必须说明这些名称不代表当前对外品牌。涉及官方能力时, 只写公开文档已经覆盖的 baicode CLI、Python wheel 安装和 OpenAI-compatible LLM 参数。涉及桌面本地 service、session、event、permission、question 时, 必须写成 BAI Work 当前兼容桥或待官方公开契约确认。
+
+这种术语纪律看似细碎, 实际上直接影响项目可信度。用户会根据文档判断应用是否成熟, 集成方会根据文档判断接口是否稳定, 安全评审会根据文档判断风险是否被承认。如果同一能力在不同章节被写成不同名称, 或把过渡实现写成官方契约, 后续沟通成本会明显升高。因此每次更新桌面主壳相关内容时, 都应同时检查标题、表述、路径、默认值和限制说明是否仍然一致。
+
+\section{更新原则}
+白皮书后续更新应坚持证据优先。新增事实必须能追溯到代码、配置、资源目录、测试或公开文档。无法验证的判断只能写成假设、风险或路线图, 不能写成当前能力。这个原则适用于所有章节, 也适用于 README 中的编译命令和统计口径。
+
+\section{小结}
+从桌面主壳视角看, BAI Work 的短期任务是把已经完成的跨平台构建和 BAI Code 接入能力稳定交付给用户, 同时把不确定协议边界暴露给维护者。长期任务是在 BAI Code 官方桌面服务契约明确后, 用正式 service/session/event/permission/question 实现替换当前 bridge 内部逻辑, 但保留桌面壳、设置模型和用户工作流的连续性。

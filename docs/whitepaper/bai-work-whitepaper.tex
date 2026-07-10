@@ -1,0 +1,54 @@
+\documentclass[UTF8,openany,zihao=-4]{ctexbook}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\setlist{nosep,leftmargin=2em}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,frame=single}
+\title{BAI Work 技术白皮书}
+\author{BAI Work Contributors}
+\date{2026年7月}
+\begin{document}
+\maketitle
+\frontmatter
+\chapter*{版本说明}
+本白皮书是 BAI Work 项目的第一版完整技术白皮书。内容基于当前仓库实现、项目 README、构建配置、运行时适配代码、资源目录说明、EBAI 映射服务以及公开 BAI Code 安装资料整理。文档采用保守口径: 能从代码和资源核对的内容写为当前事实, 官方没有公开的 BAI Code 桌面本地 HTTP service/session/event/permission/question 协议写为待确认边界。
+
+本文不包含真实 API key、token 或任何凭据。涉及环境变量的示例均使用占位符, 例如 BAI\_API\_KEY=your-key。
+
+\tableofcontents
+\mainmatter
+\input{chapters/01-positioning.tex}
+\input{chapters/02-system-overview.tex}
+\input{chapters/03-electron-shell.tex}
+\input{chapters/04-runtime-adapter.tex}
+\input{chapters/05-official-wheelhouse.tex}
+\input{chapters/06-mac-intel-runtime.tex}
+\input{chapters/07-cross-platform-build.tex}
+\input{chapters/08-config-model.tex}
+\input{chapters/09-provider-settings.tex}
+\input{chapters/10-local-service-contract.tex}
+\input{chapters/11-security-boundaries.tex}
+\input{chapters/12-ebai-mapping.tex}
+\input{chapters/13-hooks-policy.tex}
+\input{chapters/14-workflow-surface.tex}
+\input{chapters/15-write-and-automation.tex}
+\input{chapters/16-observability-testing.tex}
+\input{chapters/17-known-limits.tex}
+\input{chapters/18-roadmap.tex}
+\backmatter
+\chapter{参考资料}
+\begin{itemize}
+  \item BAI Work 仓库 README.md 和 README.en.md。
+  \item BAI Work 仓库 electron-builder.config.cjs。
+  \item BAI Work 仓库 src/main/runtime/bai-work-adapter.ts。
+  \item BAI Work 仓库 src/shared/app-settings-types.ts, src/shared/app-settings-provider.ts, src/shared/model-provider-presets.ts。
+  \item BAI Work 仓库 src/main/services/ecc-mapping-service.ts。
+  \item BAI Work 仓库 resources/bai-code-runtime/README.md 和 resources/bai-code-official/README.md。
+  \item 公开 BAI Code 文档与官方安装脚本, 详见 references.bib。
+\end{itemize}
+\end{document}

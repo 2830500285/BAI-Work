@@ -1,0 +1,88 @@
+name: Mac Intel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to update
+        required: true
+        default: v0.1.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bai-work-mac-intel
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  RELEASE_CHANNEL: frontier
+  BAI_WORK_UPDATE_CHANNEL: frontier
+
+jobs:
+  build-mac-intel:
+    name: Build Mac Intel x64
+    runs-on: macos-13
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Focused tests
+        run: >
+          npm run test --
+          src/main/packaging-config.test.ts
+          src/main/runtime/bai-work-adapter.test.ts
+          src/main/services/bai-runtime-instruction-service.test.ts
+          src/main/services/ecc-mapping-service.test.ts
+          src/main/services/ecc-source-service.test.ts
+
+      - name: Build Mac Intel release
+        run: npm run dist:mac
+
+      - name: Verify Mac Intel artifact
+        run: |
+          set -euo pipefail
+          file "dist/mac/BAI Work.app/Contents/MacOS/BAI Work" | tee /tmp/bai-work-file.txt
+          grep -q 'x86_64' /tmp/bai-work-file.txt
+          test -d "dist/mac/BAI Work.app/Contents/Resources/BAI-Code-Runtime"
+          hdiutil verify dist/BAI-Work-0.1.0-mac-x64.dmg
+          shasum -a 256 \
+            dist/BAI-Work-0.1.0-mac-x64.dmg \
+            dist/BAI-Work-0.1.0-mac-x64.zip \
+            | sed 's#  dist/#  #' > dist/SHA256SUMS.txt
+
+      - name: Upload Mac Intel release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release upload "${{ inputs.tag }}"
+          dist/BAI-Work-0.1.0-mac-x64.dmg
+          dist/BAI-Work-0.1.0-mac-x64.zip
+          dist/latest-mac.yml
+          dist/SHA256SUMS.txt
+          --clobber
+
+      - name: Upload Mac Intel workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bai-work-mac-intel-release
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/BAI-Work-0.1.0-mac-x64.dmg
+            dist/BAI-Work-0.1.0-mac-x64.zip
+            dist/latest-mac.yml
+            dist/SHA256SUMS.txt

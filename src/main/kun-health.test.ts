@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest'
+import { isKunHealthResponseBody } from './kun-health'
+
+describe('isKunHealthResponseBody', () => {
+  it('accepts BAI Work adapter health responses', () => {
+    expect(isKunHealthResponseBody(JSON.stringify({
+      status: 'ok',
+      service: 'bai-work',
+      mode: 'adapter'
+    }))).toBe(true)
+  })
+
+  it('rejects generic or legacy runtime health responses', () => {
+    expect(isKunHealthResponseBody(JSON.stringify({ status: 'ok' }))).toBe(false)
+    expect(isKunHealthResponseBody(JSON.stringify({
+      status: 'ok',
+      service: 'codewhale',
+      mode: 'serve'
+    }))).toBe(false)
+    expect(isKunHealthResponseBody(JSON.stringify({
+      status: 'ok',
+      service: 'kun',
+      mode: 'serve'
+    }))).toBe(false)
+    expect(isKunHealthResponseBody(JSON.stringify({
+      status: 'ok',
+      service: 'mimo-work',
+      mode: 'adapter'
+    }))).toBe(false)
+  })
+})

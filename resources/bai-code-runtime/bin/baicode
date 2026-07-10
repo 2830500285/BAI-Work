@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+RUNTIME_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+
+export PYTHONHOME="$RUNTIME_DIR/python"
+export PYTHONPATH="$RUNTIME_DIR/site-packages"
+export PYTHONNOUSERSITE=1
+export PYTHONDONTWRITEBYTECODE=1
+
+exec "$RUNTIME_DIR/python/bin/python3.11" "$RUNTIME_DIR/bin/baicode-entry.py" "$@"

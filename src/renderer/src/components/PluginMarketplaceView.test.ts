@@ -1,0 +1,337 @@
+import { describe, expect, it } from 'vitest'
+import {
+  buildMcpConfig,
+  customMcpConfigFragment,
+  mcpConfigHasServer,
+  mcpMarketplaceItemsFromConfigAndDiagnostics,
+  mergeMcpJsonConfig,
+  recommendedMarketplaceItemIds,
+  setMcpServerEnabled,
+  skillMarketplaceItemsFromDiscoveredSkills
+} from './PluginMarketplaceView'
+
+describe('PluginMarketplaceView MCP config helpers', () => {
+  it('does not recommend the filesystem MCP server because BAI Work has built-in file tools', () => {
+    expect(recommendedMarketplaceItemIds()).not.toContain('filesystem')
+  })
+
+  it('recommends public source packages for Skill and MCP installs', () => {
+    expect(recommendedMarketplaceItemIds()).toEqual(expect.arrayContaining([
+      'serena',
+      'firecrawl',
+      'litellm-gateway',
+      'langfuse-observability',
+      'local-security-scan',
+      'crawl4ai-web-ingestion',
+      'agent-reach',
+      'caveman',
+      'hermes-software-development',
+      'hermes-research',
+      'hermes-github',
+      'hermes-security',
+      'hermes-devops',
+      'hermes-web-development',
+      'memory',
+      'sequential-thinking'
+    ]))
+  })
+
+  it('merges recommended MCP servers into JSON config without dropping existing fields', () => {
+    const existing = JSON.stringify({
+      timeouts: { read_timeout: 120 },
+      servers: {
+        gui_schedule: { command: '/Applications/BAI Work.app' }
+      }
+    })
+
+    const merged = mergeMcpJsonConfig(
+      existing,
+      buildMcpConfig('playwright', 'npx', ['-y', '@playwright/mcp@latest'])
+    )
+    const parsed = JSON.parse(merged.text) as Record<string, any>
+
+    expect(merged.alreadyExists).toBe(false)
+    expect(parsed.timeouts).toEqual({ read_timeout: 120 })
+    expect(parsed.servers.gui_schedule).toEqual({ command: '/Applications/BAI Work.app' })
+    expect(parsed.servers.playwright).toMatchObject({
+      enabled: true,
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', '@playwright/mcp@latest'],
+      trustScope: 'user'
+    })
+    expect(mcpConfigHasServer(merged.text, 'playwright')).toBe(true)
+  })
+
+  it('builds workspace-scoped Serena MCP config', () => {
+    const fragment = buildMcpConfig(
+      'serena',
+      'serena',
+      ['start-mcp-server', '--context=ide', '--project', '/repo'],
+      {
+        trustScope: 'workspace',
+        trustedWorkspaceRoots: ['/repo']
+      }
+    )
+    const parsed = fragment as Record<string, any>
+
+    expect(parsed.servers.serena).toMatchObject({
+      enabled: true,
+      transport: 'stdio',
+      command: 'serena',
+      args: ['start-mcp-server', '--context=ide', '--project', '/repo'],
+      trustScope: 'workspace',
+      trustedWorkspaceRoots: ['/repo']
+    })
+  })
+
+  it('builds Firecrawl MCP config with an API key placeholder only', () => {
+    const fragment = buildMcpConfig(
+      'firecrawl',
+      'npx',
+      ['-y', 'firecrawl-mcp'],
+      {
+        env: {
+          FIRECRAWL_API_KEY: 'YOUR_FIRECRAWL_API_KEY'
+        }
+      }
+    )
+    const parsed = fragment as Record<string, any>
+
+    expect(parsed.servers.firecrawl).toMatchObject({
+      enabled: true,
+      transport: 'stdio',
+      command: 'npx',
+      args: ['-y', 'firecrawl-mcp'],
+      env: {
+        FIRECRAWL_API_KEY: 'YOUR_FIRECRAWL_API_KEY'
+      },
+      trustScope: 'user'
+    })
+  })
+
+  it('detects duplicate MCP servers instead of appending old-style snippets', () => {
+    const fragment = buildMcpConfig('context7', 'npx', ['-y', '@upstash/context7-mcp@latest'])
+    const first = mergeMcpJsonConfig('', fragment)
+    const second = mergeMcpJsonConfig(first.text, fragment)
+
+    expect(first.alreadyExists).toBe(false)
+    expect(second.alreadyExists).toBe(true)
+    expect(JSON.parse(second.text).servers.context7).toMatchObject({ command: 'npx' })
+  })
+
+  it('accepts custom JSON as either a single server or a BAI Work config fragment', () => {
+    expect(customMcpConfigFragment(
+      'docs',
+      '{"transport":"stdio","command":"npx","args":["-y","docs-mcp"]}',
+      {}
+    )).toEqual({
+      servers: {
+        docs: {
+          transport: 'stdio',
+          command: 'npx',
+          args: ['-y', 'docs-mcp']
+        }
+      }
+    })
+
+    expect(customMcpConfigFragment(
+      'github',
+      '{"capabilities":{"mcp":{"servers":{"github":{"transport":"stdio","command":"github-mcp"}}}}}',
+      {}
+    )).toEqual({
+      servers: {
+        github: {
+          transport: 'stdio',
+          command: 'github-mcp'
+        }
+      }
+    })
+  })
+
+  it('detects MCP servers from full BAI Work capability config', () => {
+    const content = JSON.stringify({
+      capabilities: {
+        mcp: {
+          servers: {
+            github: {
+              transport: 'stdio',
+              command: 'github-mcp'
+            }
+          }
+        }
+      }
+    })
+
+    expect(mcpConfigHasServer(content, 'github')).toBe(true)
+  })
+
+  it('turns configured MCP servers into personal marketplace items', () => {
+    const items = mcpMarketplaceItemsFromConfigAndDiagnostics(
+      '{"servers":{"docs":{"transport":"stdio","command":"docs-mcp"}}}',
+      null,
+      {
+        configured: 'Configured',
+        connected: 'Connected',
+        error: 'Error',
+        disabled: 'Disabled'
+      }
+    )
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: 'docs',
+        kind: 'mcp',
+        group: 'personal',
+        title: 'docs',
+        description: expect.stringContaining('docs-mcp'),
+        sourceLabel: 'Configured',
+        statusTone: 'default'
+      })
+    ])
+  })
+
+  it('overlays MCP runtime diagnostics onto configured marketplace items', () => {
+    const items = mcpMarketplaceItemsFromConfigAndDiagnostics(
+      JSON.stringify({
+        servers: {
+          github: {
+            transport: 'stdio',
+            command: 'github-mcp'
+          },
+          disabled_docs: {
+            transport: 'stdio',
+            command: 'docs-mcp',
+            enabled: false
+          }
+        }
+      }),
+      {
+        mcpServers: [
+          { id: 'github', status: 'connected', toolCount: 12 },
+          { id: 'bad', status: 'error', lastError: 'missing token' }
+        ]
+      },
+      {
+        configured: 'Configured',
+        connected: 'Connected',
+        error: 'Error',
+        disabled: 'Disabled'
+      }
+    )
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: 'bad',
+        sourceLabel: 'Error',
+        statusTone: 'error',
+        description: expect.stringContaining('missing token')
+      }),
+      expect.objectContaining({
+        id: 'disabled_docs',
+        sourceLabel: 'Disabled',
+        statusTone: 'warning'
+      }),
+      expect.objectContaining({
+        id: 'github',
+        sourceLabel: 'Connected',
+        statusTone: 'success',
+        descriptionKey: 'pluginMcpGithubDesc',
+        detail: expect.stringContaining('github-mcp')
+      })
+    ])
+  })
+
+  it('toggles top-level MCP servers without dropping config fields', () => {
+    const disabled = setMcpServerEnabled(JSON.stringify({
+      timeouts: { read_timeout: 120 },
+      servers: {
+        docs: {
+          transport: 'stdio',
+          command: 'docs-mcp',
+          args: ['--stdio']
+        }
+      }
+    }), 'docs', false)
+    const disabledParsed = JSON.parse(disabled) as Record<string, any>
+
+    expect(disabledParsed.timeouts).toEqual({ read_timeout: 120 })
+    expect(disabledParsed.servers.docs).toMatchObject({
+      transport: 'stdio',
+      command: 'docs-mcp',
+      args: ['--stdio'],
+      enabled: false
+    })
+
+    const enabled = setMcpServerEnabled(disabled, 'docs', true)
+    const enabledParsed = JSON.parse(enabled) as Record<string, any>
+    expect(enabledParsed.servers.docs.enabled).toBe(true)
+    expect(enabledParsed.servers.docs.command).toBe('docs-mcp')
+  })
+
+  it('toggles nested BAI Work capability MCP servers', () => {
+    const text = setMcpServerEnabled(JSON.stringify({
+      capabilities: {
+        mcp: {
+          enabled: true,
+          servers: {
+            github: {
+              transport: 'stdio',
+              command: 'github-mcp',
+              disabled: true
+            }
+          }
+        }
+      }
+    }), 'github', true)
+    const parsed = JSON.parse(text) as Record<string, any>
+
+    expect(parsed.capabilities.mcp.enabled).toBe(true)
+    expect(parsed.capabilities.mcp.servers.github).toMatchObject({
+      transport: 'stdio',
+      command: 'github-mcp',
+      enabled: true
+    })
+    expect(parsed.capabilities.mcp.servers.github).not.toHaveProperty('disabled')
+  })
+})
+
+describe('skillMarketplaceItemsFromDiscoveredSkills', () => {
+  it('turns discovered project and global skills into personal marketplace items', () => {
+    const items = skillMarketplaceItemsFromDiscoveredSkills([
+      {
+        id: 'openspec-apply-change',
+        name: 'Openspec Apply Change',
+        description: 'Implement tasks from an OpenSpec change.',
+        root: '/workspace/.codex/skills/openspec-apply-change',
+        entryPath: '/workspace/.codex/skills/openspec-apply-change/SKILL.md',
+        scope: 'project',
+        legacy: true
+      },
+      {
+        id: 'remotion-best-practices',
+        name: 'Remotion Best Practices',
+        description: 'Best practices for Remotion.',
+        root: '/Users/demo/.agents/skills/remotion-best-practices',
+        entryPath: '/Users/demo/.agents/skills/remotion-best-practices/SKILL.md',
+        scope: 'global',
+        legacy: true
+      }
+    ], { project: 'Project', global: 'Global' })
+
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: 'openspec-apply-change',
+        group: 'personal',
+        title: 'Openspec Apply Change',
+        sourceLabel: 'Project'
+      }),
+      expect.objectContaining({
+        id: 'remotion-best-practices',
+        group: 'personal',
+        title: 'Remotion Best Practices',
+        sourceLabel: 'Global'
+      })
+    ])
+  })
+})
