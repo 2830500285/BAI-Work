@@ -49,13 +49,13 @@ The public BAI Code documentation currently documents the CLI but does not publi
 
 ## Release
 
-[BAI Work 0.1.0](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.0) is available for all three desktop targets:
+[BAI Work 0.1.1](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.1) is available for all three desktop targets:
 
 | Platform | Download | Runtime packaging |
 | --- | --- | --- |
-| macOS Intel x64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-x64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-x64.zip) | Self-contained BAI Code 0.9.1 runtime |
-| macOS Apple Silicon arm64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-arm64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-mac-arm64.zip) | Official BAI Code wheelhouse |
-| Windows x64 | [NSIS installer](https://github.com/2830500285/BAI-Work/releases/download/v0.1.0/BAI-Work-0.1.0-win-x64.exe) | Official BAI Code wheelhouse |
+| macOS Intel x64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.1/BAI-Work-0.1.1-mac-x64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.1/BAI-Work-0.1.1-mac-x64.zip) | Self-contained BAI Code 0.9.1 runtime |
+| macOS Apple Silicon arm64 | [DMG](https://github.com/2830500285/BAI-Work/releases/download/v0.1.1/BAI-Work-0.1.1-mac-arm64.dmg) / [ZIP](https://github.com/2830500285/BAI-Work/releases/download/v0.1.1/BAI-Work-0.1.1-mac-arm64.zip) | Official BAI Code wheelhouse |
+| Windows x64 | [NSIS installer](https://github.com/2830500285/BAI-Work/releases/download/v0.1.1/BAI-Work-0.1.1-win-x64.exe) | Official BAI Code wheelhouse |
 
 Apple Silicon and Windows need Python 3.10-3.13 on the target machine. On first use, BAI Work creates a user-local virtual environment and installs BAI Code from the bundled offline wheelhouse. The current macOS builds are ad-hoc signed rather than notarized, and the Windows installer is unsigned.
 

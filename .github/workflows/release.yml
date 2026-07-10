@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag to update
         required: true
-        default: v0.1.0
+        default: v0.1.1
 
 permissions:
   contents: write
@@ -27,6 +27,15 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Resolve release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version='${{ inputs.tag }}'
+          version="${version#v}"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "ARTIFACT_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -50,7 +59,7 @@ jobs:
           src/main/services/ecc-source-service.test.ts
 
       - name: Build Mac Intel release
-        run: npm run dist:mac
+        run: BAI_WORK_APP_VERSION="$ARTIFACT_VERSION" npm run dist:mac
 
       - name: Verify Mac Intel artifact
         run: |
@@ -58,22 +67,24 @@ jobs:
           file "dist/mac/BAI Work.app/Contents/MacOS/BAI Work" | tee /tmp/bai-work-file.txt
           grep -q 'x86_64' /tmp/bai-work-file.txt
           test -d "dist/mac/BAI Work.app/Contents/Resources/BAI-Code-Runtime"
-          hdiutil verify dist/BAI-Work-0.1.0-mac-x64.dmg
+          hdiutil verify "dist/BAI-Work-${ARTIFACT_VERSION}-mac-x64.dmg"
           shasum -a 256 \
-            dist/BAI-Work-0.1.0-mac-x64.dmg \
-            dist/BAI-Work-0.1.0-mac-x64.zip \
-            | sed 's#  dist/#  #' > dist/SHA256SUMS.txt
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-x64.dmg" \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-x64.zip" \
+            | sed 's#  dist/#  #' > dist/SHA256SUMS-mac-x64.txt
 
       - name: Upload Mac Intel release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release upload "${{ inputs.tag }}"
-          dist/BAI-Work-0.1.0-mac-x64.dmg
-          dist/BAI-Work-0.1.0-mac-x64.zip
-          dist/latest-mac.yml
-          dist/SHA256SUMS.txt
-          --clobber
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload '${{ inputs.tag }}' \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-x64.dmg" \
+            "dist/BAI-Work-${ARTIFACT_VERSION}-mac-x64.zip" \
+            dist/latest-mac.yml \
+            dist/SHA256SUMS-mac-x64.txt \
+            --clobber
 
       - name: Upload Mac Intel workflow artifact
         uses: actions/upload-artifact@v4
@@ -82,7 +93,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: |
-            dist/BAI-Work-0.1.0-mac-x64.dmg
-            dist/BAI-Work-0.1.0-mac-x64.zip
+            dist/BAI-Work-*-mac-x64.dmg
+            dist/BAI-Work-*-mac-x64.zip
             dist/latest-mac.yml
-            dist/SHA256SUMS.txt
+            dist/SHA256SUMS-mac-x64.txt

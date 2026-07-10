@@ -1,7 +1,7 @@
 {
   "name": "bai-work",
   "productName": "BAI Work",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Electron workbench for BAI Work with a BAI Code runtime host",
   "main": "./out/main/index.js",
   "type": "module",

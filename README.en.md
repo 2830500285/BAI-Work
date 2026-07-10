@@ -67,7 +67,7 @@ report it; BAI Work does not invent a zero hit rate.
 
 ## Release
 
-[BAI Work 0.1.0](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.0)
+[BAI Work 0.1.1](https://github.com/2830500285/BAI-Work/releases/tag/v0.1.1)
 publishes native Mac Intel x64, Mac Apple Silicon arm64, and Windows x64
 artifacts. Intel ships a self-contained BAI Code 0.9.1 runtime. Apple Silicon
 and Windows ship the official offline wheelhouse and require Python 3.10-3.13

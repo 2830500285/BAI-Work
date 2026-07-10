@@ -52,7 +52,7 @@ const slides = [
     kicker: "当前状态",
     points: [
       ["产品定位", "完成 BAI Work 独立品牌整理，围绕 BAI Code 构建桌面工作台。"],
-      ["已交付构建", "Mac Intel x64、Mac Apple Silicon arm64、Windows x64 均已有 0.1.0 构建产物。"],
+      ["已交付构建", "Mac Intel x64、Mac Apple Silicon arm64、Windows x64 均已有 0.1.1 同源构建产物。"],
       ["运行时策略", "Intel Mac 内置 BAI-Code-Runtime；arm64 Mac / Windows 使用官方 BAI Code 0.9.1 wheelhouse。"],
       ["关键缺口", "官方文档尚未公开桌面本地 service/session/event/permission/question 协议。"]
     ]
@@ -203,11 +203,11 @@ const slides = [
   },
   {
     kind: "platforms",
-    title: "0.1.0 已完成三个桌面平台的原生构建与启动验证",
+    title: "0.1.1 已完成三个桌面平台的同源构建与启动验证",
     platforms: [
-      ["mac-x64", "BAI-Work-0.1.0-mac-x64.dmg\nBAI-Work-0.1.0-mac-x64.zip", "Intel runner 验证，包含自持 runtime"],
-      ["mac-arm64", "BAI-Work-0.1.0-mac-arm64.dmg\nBAI-Work-0.1.0-mac-arm64.zip", "M1 runner 验证，使用官方 wheelhouse"],
-      ["win-x64", "BAI-Work-0.1.0-win-x64.exe", "Windows 2025 runner 验证，NSIS 安装器"]
+      ["mac-x64", "BAI-Work-0.1.1-mac-x64.dmg\nBAI-Work-0.1.1-mac-x64.zip", "Intel runner 验证，包含自持 runtime"],
+      ["mac-arm64", "BAI-Work-0.1.1-mac-arm64.dmg\nBAI-Work-0.1.1-mac-arm64.zip", "M1 runner 验证，使用官方 wheelhouse"],
+      ["win-x64", "BAI-Work-0.1.1-win-x64.exe", "Windows 2025 runner 验证，NSIS 安装器"]
     ]
   },
   {

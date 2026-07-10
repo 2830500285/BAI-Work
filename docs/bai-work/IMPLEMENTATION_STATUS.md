@@ -42,7 +42,7 @@ Code runtime behavior through `src/main/runtime/bai-work-adapter.ts`.
 
 - Mac Intel x64, Mac Apple Silicon arm64, and Windows x64 have native CI builds
   and packaged runtime health smokes.
-- Release assets are published together under GitHub release `v0.1.0`.
+- Release assets are published together under GitHub release `v0.1.1`.
 - Apple Silicon and Windows require a supported system Python to bootstrap the
   bundled official BAI Code wheelhouse.
 - Keep credentials out of source, logs, snapshots, and packaged resources.
