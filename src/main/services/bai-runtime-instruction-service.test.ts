@@ -99,6 +99,31 @@ describe('BAI runtime managed instructions', () => {
     expect(result.appliedSkills).not.toContain('unrelated')
   })
 
+  it('prioritizes skills explicitly named in the user request', async () => {
+    const root = await tempRoot()
+    const ids = ['academic-loop', 'nature-figure', 'academic-research-suite', 'bai-work-guardrails']
+    const skills = await Promise.all(ids.map(async (id) => {
+      const skillRoot = join(root, id)
+      const entryPath = join(skillRoot, 'SKILL.md')
+      await writeText(entryPath, `# ${id}`)
+      return { id, name: id, root: skillRoot, entryPath, scope: 'global' as const, legacy: true }
+    }))
+
+    const result = await resolveBaiRuntimeInstructions({
+      settings,
+      workspace: root,
+      prompt: '调用 Academic Loop 和 nature-figure，检查代码并完成论文。',
+      displayPrompt: '调用 Academic Loop 和 nature-figure，检查代码并完成论文。'
+    }, {
+      commandsDir: join(root, 'commands'),
+      listSkills: async () => ({ ok: true, skills, validationErrors: [] })
+    })
+
+    expect(result.appliedSkills.slice(0, 2)).toEqual(['academic-loop', 'nature-figure'])
+    expect(result.appliedSkills).toContain('bai-work-guardrails')
+    expect(result.appliedSkills).not.toContain('academic-research-suite')
+  })
+
   it('does not auto-load skills from generic BAI Work wording alone', async () => {
     const root = await tempRoot()
     const skills = ['canary-watch', 'hermes-imports', 'bai-work-guardrails'].map((id) => ({

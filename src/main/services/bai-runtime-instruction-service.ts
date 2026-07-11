@@ -191,12 +191,34 @@ function selectSkills(
     return explicit ? [explicit] : []
   }
 
-  return skills
+  const query = normalizeSearchText(prompt)
+  const named = skills
+    .map((skill) => ({ skill, index: explicitSkillMentionIndex(skill, query) }))
+    .filter((entry) => entry.index >= 0)
+    .sort((a, b) => a.index - b.index || a.skill.id.localeCompare(b.skill.id))
+    .map((entry) => entry.skill)
+  const namedIds = new Set(named.map((skill) => skill.id))
+  const automatic = skills
+    .filter((skill) => !namedIds.has(skill.id))
     .map((skill) => ({ skill, score: skillScore(skill, prompt) }))
     .filter((entry) => entry.score >= MIN_AUTO_SKILL_SCORE)
     .sort((a, b) => b.score - a.score || a.skill.id.localeCompare(b.skill.id))
-    .slice(0, MAX_AUTO_SKILLS)
     .map((entry) => entry.skill)
+  return [...named, ...automatic].slice(0, MAX_AUTO_SKILLS)
+}
+
+function explicitSkillMentionIndex(skill: GuiSkillSummary, normalizedPrompt: string): number {
+  const aliases = new Set([
+    skill.id,
+    skill.name,
+    basename(skill.root)
+  ].map(normalizeSearchText).filter((value) => value.length >= 3))
+  let first = -1
+  for (const alias of aliases) {
+    const index = normalizedPrompt.indexOf(alias)
+    if (index >= 0 && (first < 0 || index < first)) first = index
+  }
+  return first
 }
 
 function skillScore(skill: GuiSkillSummary, prompt: string): number {

@@ -1067,6 +1067,7 @@ function buildBaiCodeCliPrompt(
     'You are BAI Work, the desktop AI workbench assistant.',
     'In user-facing replies, identify yourself as BAI Work.',
     'Do not call yourself BAI Code, BAI code, or Baicode. BAI Code is only the internal runtime used by BAI Work.',
+    'Use native tool calls whenever tools are required. Never imitate a tool call, narrate an upcoming tool call as if it ran, or repeat execution preambles in assistant text.',
     preferredResponseLanguageInstruction(currentTurn.prompt),
     `Workspace: ${thread.workspace}`
   ]
@@ -1127,6 +1128,7 @@ function normalizeBaiWorkAssistantBranding(text: string): string {
 }
 
 type BaiCliProgress = { summary: string; detail?: string }
+type BaiCliOutputProblem = BaiCliProgress & { code: string }
 type BaiCliTraceSpan = { start: number; end: number; toolName: string; raw: string }
 
 function isTraceBoundary(text: string, index: number): boolean {
@@ -1447,6 +1449,55 @@ function baiCliHeartbeatProgress(startedAt: number): BaiCliProgress {
   return { summary: '仍在处理长任务', detail: '本地运行时尚未结束；如果任务需要生成文件或安装依赖，可能需要更长时间。' }
 }
 
+function repeatedAgentPrelude(text: string): boolean {
+  const counts = new Map<string, number>()
+  let total = 0
+  for (const sentence of text.split(/[.!?。！？]+/)) {
+    const normalized = sentence.replace(/\s+/g, ' ').trim().toLowerCase()
+    if (!normalized || !/^(?:let(?:'|’)s\b|让我们|现在让我们|首先让我们)/i.test(normalized)) continue
+    total += 1
+    counts.set(normalized, (counts.get(normalized) ?? 0) + 1)
+  }
+  return total >= 10 && [...counts.values()].some((count) => count >= 5)
+}
+
+function endsWithToolPrelude(text: string): boolean {
+  const tail = text.replace(/\*+\s*$/, '').trim().slice(-320)
+  return (
+    /(?:首先|接下来|现在|下面|让我|让我们)[^。！？]{0,180}(?:使用|调用|运行|执行)[^。！？]{0,60}(?:glob|bash|工具)[^。！？]*[。！？]?$/i.test(tail) ||
+    /(?:let(?:'|’)s)[^.!?]{0,180}(?:search|run|use|call|find|execute)[^.!?]*[.!?]?$/i.test(tail)
+  )
+}
+
+function baiCliOutputProblem(
+  raw: string,
+  config: BaiRuntimeConfig,
+  model: string,
+  completed: boolean
+): BaiCliOutputProblem | null {
+  const cleaned = cleanCliOutput(raw, config)
+  const stripped = stripBaiCodeTraceCalls(cleaned)
+  const visible = stripped.text.replace(/\s+/g, ' ').trim()
+  const modelLabel = model.trim() || '当前模型'
+
+  if (repeatedAgentPrelude(visible)) {
+    return {
+      code: 'bai_code_repetitive_output',
+      summary: '已停止重复输出',
+      detail: `${modelLabel} 本次没有形成有效的工具调用，并持续返回重复执行旁白。BAI Work 已停止本轮任务，避免继续消耗 Token；请改用支持 OpenAI 兼容工具调用的模型后重试。`
+    }
+  }
+  if (!completed) return null
+  if (!visible || (stripped.removedTrace && endsWithToolPrelude(visible))) {
+    return {
+      code: 'bai_code_missing_final_result',
+      summary: '任务未完成',
+      detail: 'BAI Code 进程已经结束，但没有返回可验证的最终结果。BAI Work 不会把本次运行标记为完成，也不会声称 PDF 或其他产物已经生成；请检查工作区产物，或改用支持工具调用的模型后重试。'
+    }
+  }
+  return null
+}
+
 function estimateTokenCount(text: string): number {
   const normalized = text.trim()
   if (!normalized) return 0
@@ -1665,6 +1716,7 @@ async function runBaiCodeCliTurnAsync(input: {
   let stderr = ''
   const stdoutDecoder = new StringDecoder('utf8')
   const stderrDecoder = new StringDecoder('utf8')
+  let outputProblem: BaiCliOutputProblem | null = null
   let emittedStepCount = 0
   updateEstimatedTurnUsage(thread, turn, prompt, '')
 
@@ -1744,6 +1796,13 @@ async function runBaiCodeCliTurnAsync(input: {
         prompt,
         stripBaiCodeTraceCalls(cleanCliOutput(stdout, config)).text
       )
+      if (!outputProblem) {
+        outputProblem = baiCliOutputProblem(stdout, config, turn.model || config.model, false)
+        if (outputProblem) {
+          updateTool(outputProblem)
+          child.kill('SIGTERM')
+        }
+      }
     })
     child.stderr.on('data', (chunk) => {
       stderr += stderrDecoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
@@ -1793,14 +1852,17 @@ async function runBaiCodeCliTurnAsync(input: {
       stdout += stdoutDecoder.end()
       stderr += stderrDecoder.end()
       const finishedAt = nowIso()
-      const ok = code === 0
+      if (code === 0) {
+        outputProblem ??= baiCliOutputProblem(stdout, config, turn.model || config.model, true)
+      }
+      const ok = code === 0 && !outputProblem
       appendStepItems()
-      const progress = summarizeBaiCodeToolProgress({
-        config,
-        stdout,
-        stderr,
-        status: ok ? 'completed' : 'failed'
-      })
+      const progress = outputProblem ?? summarizeBaiCodeToolProgress({
+          config,
+          stdout,
+          stderr,
+          status: ok ? 'completed' : 'failed'
+        })
       toolItem.status = ok ? 'completed' : 'failed'
       toolItem.isError = !ok
       toolItem.finishedAt = finishedAt
@@ -1824,11 +1886,13 @@ async function runBaiCodeCliTurnAsync(input: {
       })
 
       if (!ok) {
+        assistantItem.status = 'failed'
+        assistantItem.finishedAt = finishedAt
         failBridgeTurn(
           thread,
           turn,
-          'bai_code_cli_failed',
-          progress.detail ?? summarizeBaiCodeCliFailure(
+          outputProblem?.code ?? 'bai_code_cli_failed',
+          outputProblem?.detail ?? progress.detail ?? summarizeBaiCodeCliFailure(
             stderr || stdout || `BAI Work exited with code ${code ?? 'null'}.`,
             config
           ).detail ?? 'BAI Work 运行失败，请稍后重试。'

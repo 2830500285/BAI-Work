@@ -386,6 +386,7 @@ if [ -f '${counterPath}' ]; then
 	      expect(args).toContain('-p')
 	      expect(args).toContain('You are BAI Work, the desktop AI workbench assistant.')
 	      expect(args).toContain('Do not call yourself BAI Code')
+	      expect(args).toContain('Use native tool calls')
 	      expect(args).toContain('Reply exactly OK.')
 	      expect(args).toContain('first answer from CLI')
       expect(args).toContain('继续')
@@ -505,6 +506,72 @@ setTimeout(() => {
       expect(assistantText).not.toContain('�')
       expect(assistantText).not.toContain('glob(')
       expect(assistantText).not.toContain('bash(')
+    } finally {
+      await baiWorkRuntimeAdapter.stopAndWait()
+      rmSync(tempRoot, { recursive: true, force: true })
+    }
+  })
+
+  itWithPosixFakeCli('fails trace-only and repetitive CLI output instead of claiming completion', async () => {
+    const tempRoot = join(process.cwd(), 'work', 'bai-adapter-invalid-output-test')
+    const binPath = join(tempRoot, 'baicode')
+    mkdirSync(tempRoot, { recursive: true })
+    writeFileSync(binPath, `#!/bin/sh
+if [ "$1" = "--version" ]; then echo "baicode fake 0.0.0"; exit 0; fi
+case "$2" in
+  *REPEATED_LOOP*)
+    i=0
+    while [ "$i" -lt 10 ]; do
+      echo "Let's search. Let's run. Let's go. Let's do this. Let's find out."
+      i=$((i + 1))
+    done
+    ;;
+  *TRACE_ONLY*)
+    echo "首先，让我们使用 glob 工具探索当前工作区中的文件。"
+    echo "glob(pattern='**/*')"
+    echo "bash(command='find . -name *.pdf')"
+    ;;
+esac
+`)
+    chmodSync(binPath, 0o755)
+    const port = await getFreePort()
+    const settings = settingsWithRuntimePatch({ binaryPath: binPath, port })
+
+    try {
+      await baiWorkRuntimeAdapter.ensureRunning(settings)
+      const threadResponse = await fetch(`http://127.0.0.1:${port}/v1/threads`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ workspace: process.cwd(), title: 'invalid output smoke' })
+      })
+      const thread = await threadResponse.json() as { id: string }
+
+      const traceResponse = await fetch(`http://127.0.0.1:${port}/v1/threads/${thread.id}/turns`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'TRACE_ONLY' })
+      })
+      const traceTurn = await traceResponse.json() as { turnId: string }
+      const failedTraceTurn = await waitForFailedTurn(port, thread.id, traceTurn.turnId)
+      const traceError = failedTraceTurn?.items.find((item) => item.role === 'system')?.message ?? ''
+
+      expect(failedTraceTurn?.status).toBe('failed')
+      expect(traceError).toContain('没有返回可验证的最终结果')
+      expect(JSON.stringify(failedTraceTurn)).not.toContain('结果已整理完成')
+
+      const loopResponse = await fetch(`http://127.0.0.1:${port}/v1/threads/${thread.id}/turns`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'REPEATED_LOOP' })
+      })
+      const loopTurn = await loopResponse.json() as { turnId: string }
+      const failedLoopTurn = await waitForFailedTurn(port, thread.id, loopTurn.turnId)
+      const loopError = failedLoopTurn?.items.find((item) => item.role === 'system')?.message ?? ''
+
+      expect(failedLoopTurn?.status).toBe('failed')
+      expect(loopError).toContain('重复')
+      expect(loopError).toContain('避免继续消耗 Token')
+      expect(JSON.stringify(failedLoopTurn)).not.toContain("Let's search")
     } finally {
       await baiWorkRuntimeAdapter.stopAndWait()
       rmSync(tempRoot, { recursive: true, force: true })
