@@ -160,6 +160,13 @@ describe('BAI Work runtime adapter', () => {
     ]))
   })
 
+  it('asks the runtime to answer Chinese requests in Simplified Chinese', () => {
+    expect(baiWorkAdapterTestInternals.preferredResponseLanguageInstruction('请检查工作区并用中文回复。'))
+      .toContain('Reply in Simplified Chinese')
+    expect(baiWorkAdapterTestInternals.preferredResponseLanguageInstruction('Inspect the workspace.'))
+      .toContain('same language')
+  })
+
   it('honors an explicit BAI Code executable path override', () => {
     const config = baiWorkAdapterTestInternals.effectiveBaiRuntimeConfig(settingsWithRuntimePatch({
       binaryPath: '/Applications/BAI Code.app/Contents/MacOS/baicode'
@@ -444,6 +451,60 @@ echo "BAI Work 已完成报告。"
       ]))
       expect(completedTurn?.items.find((item) => item.role === 'assistant')?.text).not.toContain('read_file(')
       expect(stepIndexes.every((index) => index < assistantIndex)).toBe(true)
+    } finally {
+      await baiWorkRuntimeAdapter.stopAndWait()
+      rmSync(tempRoot, { recursive: true, force: true })
+    }
+  })
+
+  itWithPosixFakeCli('preserves split UTF-8 text, hides CLI traces, and requests a Chinese reply', async () => {
+    const tempRoot = join(process.cwd(), 'work', 'bai-adapter-utf8-test')
+    const binPath = join(tempRoot, 'baicode')
+    mkdirSync(tempRoot, { recursive: true })
+    writeFileSync(binPath, `#!/usr/bin/env node
+if (process.argv[2] === '--version') {
+  process.stdout.write('baicode fake 0.0.0\\n')
+  process.exit(0)
+}
+const output = Buffer.from('正在处理中文任务。\\n', 'utf8')
+const marker = Buffer.from('处理', 'utf8')
+const split = output.indexOf(marker) + 1
+process.stdout.write(output.subarray(0, split))
+setTimeout(() => {
+  process.stdout.write(output.subarray(split))
+  process.stdout.write("glob(pattern='**/*')\\n")
+  process.stdout.write('\\uFFFD\\uFFFD\\n')
+  process.stdout.write("bash(command='pwd')\\n")
+  process.stdout.write('任务完成。\\n')
+}, 25)
+`)
+    chmodSync(binPath, 0o755)
+    const port = await getFreePort()
+    const settings = settingsWithRuntimePatch({ binaryPath: binPath, port })
+
+    try {
+      await baiWorkRuntimeAdapter.ensureRunning(settings)
+      const threadResponse = await fetch(`http://127.0.0.1:${port}/v1/threads`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ workspace: process.cwd(), title: 'UTF-8 stream smoke' })
+      })
+      const thread = await threadResponse.json() as { id: string }
+      const turnResponse = await fetch(`http://127.0.0.1:${port}/v1/threads/${thread.id}/turns`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: '请检查工作区并用中文回复。' })
+      })
+      const turn = await turnResponse.json() as { turnId: string }
+      const completedTurn = await waitForCompletedTurn(port, thread.id, turn.turnId)
+      const assistantText = completedTurn?.items.find((item) => item.role === 'assistant')?.text ?? ''
+
+      expect(completedTurn?.status).toBe('completed')
+      expect(assistantText).toContain('正在处理中文任务。')
+      expect(assistantText).toContain('任务完成。')
+      expect(assistantText).not.toContain('�')
+      expect(assistantText).not.toContain('glob(')
+      expect(assistantText).not.toContain('bash(')
     } finally {
       await baiWorkRuntimeAdapter.stopAndWait()
       rmSync(tempRoot, { recursive: true, force: true })

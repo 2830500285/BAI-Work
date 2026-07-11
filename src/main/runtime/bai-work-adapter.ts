@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
 import { basename, delimiter, join, win32 as win32Path } from 'node:path'
+import { StringDecoder } from 'node:string_decoder'
 import { URL } from 'node:url'
 import {
   DEFAULT_KUN_DATA_DIR,
@@ -41,6 +42,7 @@ const BAI_CLI_TRACE_TOOL_NAMES = [
   'edit_file',
   'run_command',
   'bash',
+  'glob',
   'grep',
   'find',
   'python',
@@ -1065,6 +1067,7 @@ function buildBaiCodeCliPrompt(
     'You are BAI Work, the desktop AI workbench assistant.',
     'In user-facing replies, identify yourself as BAI Work.',
     'Do not call yourself BAI Code, BAI code, or Baicode. BAI Code is only the internal runtime used by BAI Work.',
+    preferredResponseLanguageInstruction(currentTurn.prompt),
     `Workspace: ${thread.workspace}`
   ]
   if (messages.length <= 1) {
@@ -1090,6 +1093,14 @@ function buildBaiCodeCliPrompt(
   ].join('\n\n')
 }
 
+function preferredResponseLanguageInstruction(prompt: string): string {
+  const looksChinese = /[\u3400-\u9fff\uf900-\ufaff]/.test(prompt) &&
+    !/[\u3040-\u30ff\uac00-\ud7af]/.test(prompt)
+  return looksChinese
+    ? 'Reply in Simplified Chinese unless the current user request explicitly asks for another language.'
+    : 'Reply in the same language as the current user request unless it explicitly asks for another language.'
+}
+
 function redactRuntimeText(text: string, config: BaiRuntimeConfig): string {
   const apiKey = config.apiKey.trim()
   return apiKey ? text.split(apiKey).join('[REDACTED_API_KEY]') : text
@@ -1101,7 +1112,9 @@ function stripAnsi(text: string): string {
 }
 
 function cleanCliOutput(text: string, config: BaiRuntimeConfig): string {
-  return stripAnsi(redactRuntimeText(text, config)).replace(/\r\n/g, '\n')
+  return stripAnsi(redactRuntimeText(text, config))
+    .replace(/\r\n/g, '\n')
+    .replace(/\uFFFD+/g, '')
 }
 
 function normalizeBaiWorkAssistantBranding(text: string): string {
@@ -1279,7 +1292,7 @@ function summarizeTraceSpan(span: BaiCliTraceSpan): string {
     const filePath = shortTracePath(extractTraceField(span.raw, 'file_path') || extractTraceField(span.raw, 'path'))
     return filePath ? `更新 ${filePath}` : '更新文件'
   }
-  if (toolName === 'grep' || toolName === 'find' || toolName === 'ls') return '检查工作区'
+  if (toolName === 'glob' || toolName === 'grep' || toolName === 'find' || toolName === 'ls') return '检查工作区'
   if (toolName === 'python') return '运行生成脚本'
   return '执行本地步骤'
 }
@@ -1650,6 +1663,8 @@ async function runBaiCodeCliTurnAsync(input: {
 
   let stdout = ''
   let stderr = ''
+  const stdoutDecoder = new StringDecoder('utf8')
+  const stderrDecoder = new StringDecoder('utf8')
   let emittedStepCount = 0
   updateEstimatedTurnUsage(thread, turn, prompt, '')
 
@@ -1720,7 +1735,7 @@ async function runBaiCodeCliTurnAsync(input: {
     }, BAI_CLI_PROGRESS_HEARTBEAT_MS)
 
     child.stdout.on('data', (chunk) => {
-      stdout += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk)
+      stdout += stdoutDecoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
       appendStepItems()
       updateTool()
       updateEstimatedTurnUsage(
@@ -1731,7 +1746,7 @@ async function runBaiCodeCliTurnAsync(input: {
       )
     })
     child.stderr.on('data', (chunk) => {
-      stderr += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk)
+      stderr += stderrDecoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
       appendStepItems()
       updateTool()
     })
@@ -1739,6 +1754,8 @@ async function runBaiCodeCliTurnAsync(input: {
       if (settled) return
       settled = true
       clearInterval(heartbeat)
+      stdout += stdoutDecoder.end()
+      stderr += stderrDecoder.end()
       const failureText = `${stderr}${stderr ? '\n' : ''}${requestErrorMessage(error)}`
       appendStepItems()
       toolItem.status = 'failed'
@@ -1773,6 +1790,8 @@ async function runBaiCodeCliTurnAsync(input: {
       if (settled) return
       settled = true
       clearInterval(heartbeat)
+      stdout += stdoutDecoder.end()
+      stderr += stderrDecoder.end()
       const finishedAt = nowIso()
       const ok = code === 0
       appendStepItems()
@@ -2405,6 +2424,7 @@ export const baiWorkAdapterTestInternals = {
   officialRuntimeVenvCommand,
   officialRuntimeVenvPython,
   officialWheelPlatformTag,
+  preferredResponseLanguageInstruction,
   runtimeSearchPath,
   resolveAvailablePort: baiWorkRuntimeAdapter.resolveAvailablePort
 }
