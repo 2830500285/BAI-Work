@@ -35,6 +35,9 @@ const BAI_CHAT_TIMEOUT_MS = 120_000
 const BAI_CHAT_HISTORY_MAX_MESSAGES = 24
 const BAI_CHAT_HISTORY_MAX_CHARS = 32_000
 const BAI_CLI_PROGRESS_HEARTBEAT_MS = 4_000
+const BAI_CLI_MAX_RUNTIME_MS = 30 * 60_000
+const BAI_CLI_SILENT_NOTICE_MS = 30_000
+const BAI_CLI_LONG_SILENCE_MS = 2 * 60_000
 const BAI_CLI_TRACE_TOOL_NAMES = [
   'apply_patch',
   'write_file',
@@ -42,6 +45,7 @@ const BAI_CLI_TRACE_TOOL_NAMES = [
   'edit_file',
   'run_command',
   'bash',
+  'agent',
   'glob',
   'grep',
   'find',
@@ -1185,14 +1189,15 @@ function findBaiCodeTraceSpans(text: string): BaiCliTraceSpan[] {
         const lineStart = text.lastIndexOf('\n', index - 1) + 1
         const lineEnd = text.indexOf('\n', openIndex)
         const prefix = text.slice(lineStart, index).trim()
-        if (lineEnd >= 0 && (prefix === '' || /^[-*•]$/.test(prefix))) {
+        if (lineEnd < 0 || prefix === '' || /^[-*•]$/.test(prefix)) {
+          const end = lineEnd >= 0 ? lineEnd : text.length
           spans.push({
             start: index,
-            end: lineEnd,
+            end,
             toolName,
-            raw: text.slice(index, lineEnd)
+            raw: text.slice(index, end)
           })
-          index = lineEnd - 1
+          index = end - 1
           matched = true
         }
       }
@@ -1295,6 +1300,7 @@ function summarizeTraceSpan(span: BaiCliTraceSpan): string {
     return filePath ? `更新 ${filePath}` : '更新文件'
   }
   if (toolName === 'glob' || toolName === 'grep' || toolName === 'find' || toolName === 'ls') return '检查工作区'
+  if (toolName === 'agent') return '执行专项子任务'
   if (toolName === 'python') return '运行生成脚本'
   return '执行本地步骤'
 }
@@ -1449,6 +1455,23 @@ function baiCliHeartbeatProgress(startedAt: number): BaiCliProgress {
   return { summary: '仍在处理长任务', detail: '本地运行时尚未结束；如果任务需要生成文件或安装依赖，可能需要更长时间。' }
 }
 
+function baiCliSilentProgress(lastOutputAt: number, now = Date.now()): BaiCliProgress | null {
+  const silentMs = Math.max(0, now - lastOutputAt)
+  if (silentMs < BAI_CLI_SILENT_NOTICE_MS) return null
+  const seconds = Math.max(1, Math.round(silentMs / 1000))
+  const elapsed = seconds < 60 ? `${seconds} 秒` : `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`
+  if (silentMs < BAI_CLI_LONG_SILENCE_MS) {
+    return {
+      summary: '正在等待本地步骤返回',
+      detail: `最近的本地步骤仍在执行，已有 ${elapsed} 没有新输出。`
+    }
+  }
+  return {
+    summary: '本地步骤仍在运行',
+    detail: `BAI Code 已有 ${elapsed} 没有返回新输出，可能正在进行计算、编译或专项子任务；达到 30 分钟总上限时会自动停止。`
+  }
+}
+
 function repeatedAgentPrelude(text: string): boolean {
   const counts = new Map<string, number>()
   let total = 0
@@ -1464,7 +1487,7 @@ function repeatedAgentPrelude(text: string): boolean {
 function endsWithToolPrelude(text: string): boolean {
   const tail = text.replace(/\*+\s*$/, '').trim().slice(-320)
   return (
-    /(?:首先|接下来|现在|下面|让我|让我们)[^。！？]{0,180}(?:使用|调用|运行|执行)[^。！？]{0,60}(?:glob|bash|工具)[^。！？]*[。！？]?$/i.test(tail) ||
+    /(?:首先|接下来|现在|下面|让我|让我们)[^。！？]{0,180}(?:使用|调用|运行|执行)[^。！？]{0,80}(?:glob|bash|agent|工具|子代理|专项任务)[^。！？]*[。！？]?$/i.test(tail) ||
     /(?:let(?:'|’)s)[^.!?]{0,180}(?:search|run|use|call|find|execute)[^.!?]*[.!?]?$/i.test(tail)
   )
 }
@@ -1723,6 +1746,7 @@ async function runBaiCodeCliTurnAsync(input: {
   const stdoutDecoder = new StringDecoder('utf8')
   const stderrDecoder = new StringDecoder('utf8')
   let outputProblem: BaiCliOutputProblem | null = null
+  let lastOutputAt = Date.now()
   let emittedStepCount = 0
   updateEstimatedTurnUsage(thread, turn, prompt, '')
 
@@ -1786,13 +1810,24 @@ async function runBaiCodeCliTurnAsync(input: {
     const heartbeat = setInterval(() => {
       if (settled) return
       const currentProgress = summarizeBaiCodeToolProgress({ config, stdout, stderr, status: 'running' })
-      const progress = currentProgress.summary === '正在启动任务'
+      const progress = baiCliSilentProgress(lastOutputAt) ?? (currentProgress.summary === '正在启动任务'
         ? baiCliHeartbeatProgress(startedAt)
-        : currentProgress
+        : currentProgress)
       updateTool(progress)
     }, BAI_CLI_PROGRESS_HEARTBEAT_MS)
+    const maxRuntime = setTimeout(() => {
+      if (settled) return
+      outputProblem = {
+        code: 'bai_code_cli_timeout',
+        summary: '已停止超时任务',
+        detail: 'BAI Code 本轮运行已达到 30 分钟上限。BAI Work 已停止等待，避免任务无限挂起；请检查工作区中的阶段性产物后拆分任务重试。'
+      }
+      updateTool(outputProblem)
+      child.kill('SIGTERM')
+    }, BAI_CLI_MAX_RUNTIME_MS)
 
     child.stdout.on('data', (chunk) => {
+      lastOutputAt = Date.now()
       stdout += stdoutDecoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
       appendStepItems()
       updateTool()
@@ -1811,6 +1846,7 @@ async function runBaiCodeCliTurnAsync(input: {
       }
     })
     child.stderr.on('data', (chunk) => {
+      lastOutputAt = Date.now()
       stderr += stderrDecoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
       appendStepItems()
       updateTool()
@@ -1819,6 +1855,7 @@ async function runBaiCodeCliTurnAsync(input: {
       if (settled) return
       settled = true
       clearInterval(heartbeat)
+      clearTimeout(maxRuntime)
       stdout += stdoutDecoder.end()
       stderr += stderrDecoder.end()
       const failureText = `${stderr}${stderr ? '\n' : ''}${requestErrorMessage(error)}`
@@ -1855,6 +1892,7 @@ async function runBaiCodeCliTurnAsync(input: {
       if (settled) return
       settled = true
       clearInterval(heartbeat)
+      clearTimeout(maxRuntime)
       stdout += stdoutDecoder.end()
       stderr += stderrDecoder.end()
       const finishedAt = nowIso()
@@ -2495,6 +2533,7 @@ export const baiWorkAdapterTestInternals = {
   officialRuntimeVenvPython,
   officialWheelPlatformTag,
   preferredResponseLanguageInstruction,
+  baiCliSilentProgress,
   runtimeSearchPath,
   sanitizeBaiAssistantHistoryText,
   resolveAvailablePort: baiWorkRuntimeAdapter.resolveAvailablePort

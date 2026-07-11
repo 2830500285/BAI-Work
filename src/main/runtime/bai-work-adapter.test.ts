@@ -178,6 +178,18 @@ describe('BAI Work runtime adapter', () => {
       .toBe('已完成检查，结果位于 result.pdf。')
   })
 
+  it('describes long silent CLI steps without pretending they stopped', () => {
+    const startedAt = Date.parse('2026-07-11T08:00:00.000Z')
+
+    expect(baiWorkAdapterTestInternals.baiCliSilentProgress(startedAt, startedAt + 20_000)).toBeNull()
+    expect(baiWorkAdapterTestInternals.baiCliSilentProgress(startedAt, startedAt + 45_000)).toMatchObject({
+      summary: '正在等待本地步骤返回'
+    })
+    expect(baiWorkAdapterTestInternals.baiCliSilentProgress(startedAt, startedAt + 150_000)).toMatchObject({
+      summary: '本地步骤仍在运行'
+    })
+  })
+
   it('honors an explicit BAI Code executable path override', () => {
     const config = baiWorkAdapterTestInternals.effectiveBaiRuntimeConfig(settingsWithRuntimePatch({
       binaryPath: '/Applications/BAI Code.app/Contents/MacOS/baicode'
@@ -530,6 +542,9 @@ setTimeout(() => {
     writeFileSync(binPath, `#!/bin/sh
 if [ "$1" = "--version" ]; then echo "baicode fake 0.0.0"; exit 0; fi
 case "$2" in
+  *AGENT_ONLY*)
+    printf "尚缺最终 PDF。\\n让我继续执行专项任务。 * agent(task='生成论文"
+    ;;
   *REPEATED_LOOP*)
     i=0
     while [ "$i" -lt 10 ]; do
@@ -583,6 +598,19 @@ esac
       expect(loopError).toContain('重复')
       expect(loopError).toContain('避免继续消耗 Token')
       expect(JSON.stringify(failedLoopTurn)).not.toContain("Let's search")
+
+      const agentResponse = await fetch(`http://127.0.0.1:${port}/v1/threads/${thread.id}/turns`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'AGENT_ONLY' })
+      })
+      const agentTurn = await agentResponse.json() as { turnId: string }
+      const failedAgentTurn = await waitForFailedTurn(port, thread.id, agentTurn.turnId)
+      const agentError = failedAgentTurn?.items.find((item) => item.role === 'system')?.message ?? ''
+
+      expect(failedAgentTurn?.status).toBe('failed')
+      expect(agentError).toContain('没有返回可验证的最终结果')
+      expect(JSON.stringify(failedAgentTurn)).not.toContain('agent(task=')
     } finally {
       await baiWorkRuntimeAdapter.stopAndWait()
       rmSync(tempRoot, { recursive: true, force: true })
