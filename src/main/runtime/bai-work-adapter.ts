@@ -1031,7 +1031,7 @@ function buildBaiChatMessages(thread: BaiBridgeThread, currentTurn: BaiBridgeTur
     for (const item of candidate.items) {
       if (item.role !== 'assistant' || item.kind !== 'assistant_text') continue
       if (candidate.id === currentTurn.id && item.status !== 'completed') continue
-      const assistantContent = item.text?.trim() || ''
+      const assistantContent = sanitizeBaiAssistantHistoryText(item.text ?? '')
       if (assistantContent) {
         messages.push({ role: 'assistant', content: assistantContent })
       }
@@ -1467,6 +1467,12 @@ function endsWithToolPrelude(text: string): boolean {
     /(?:首先|接下来|现在|下面|让我|让我们)[^。！？]{0,180}(?:使用|调用|运行|执行)[^。！？]{0,60}(?:glob|bash|工具)[^。！？]*[。！？]?$/i.test(tail) ||
     /(?:let(?:'|’)s)[^.!?]{0,180}(?:search|run|use|call|find|execute)[^.!?]*[.!?]?$/i.test(tail)
   )
+}
+
+function sanitizeBaiAssistantHistoryText(text: string): string {
+  const stripped = stripBaiCodeTraceCalls(text.replace(/\uFFFD+/g, '')).text.trim()
+  if (!stripped || repeatedAgentPrelude(stripped) || endsWithToolPrelude(stripped)) return ''
+  return stripped
 }
 
 function baiCliOutputProblem(
@@ -2490,5 +2496,6 @@ export const baiWorkAdapterTestInternals = {
   officialWheelPlatformTag,
   preferredResponseLanguageInstruction,
   runtimeSearchPath,
+  sanitizeBaiAssistantHistoryText,
   resolveAvailablePort: baiWorkRuntimeAdapter.resolveAvailablePort
 }

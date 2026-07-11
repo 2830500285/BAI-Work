@@ -167,6 +167,17 @@ describe('BAI Work runtime adapter', () => {
       .toContain('same language')
   })
 
+  it('excludes repetitive and unfinished assistant output from later conversation context', () => {
+    const loop = Array(8).fill("Let's search. Let's run. Let's go. Let's do this. Let's find out.").join(' ')
+
+    expect(baiWorkAdapterTestInternals.sanitizeBaiAssistantHistoryText(loop)).toBe('')
+    expect(baiWorkAdapterTestInternals.sanitizeBaiAssistantHistoryText(
+      '首先，让我们使用 glob 工具探索当前工作区中的文件。'
+    )).toBe('')
+    expect(baiWorkAdapterTestInternals.sanitizeBaiAssistantHistoryText('已完成检查，结果位于 result.pdf。'))
+      .toBe('已完成检查，结果位于 result.pdf。')
+  })
+
   it('honors an explicit BAI Code executable path override', () => {
     const config = baiWorkAdapterTestInternals.effectiveBaiRuntimeConfig(settingsWithRuntimePatch({
       binaryPath: '/Applications/BAI Code.app/Contents/MacOS/baicode'
