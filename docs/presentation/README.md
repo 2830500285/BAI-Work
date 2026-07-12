@@ -4,9 +4,55 @@ This folder contains the BAI Work project presentation.
 
 ## Files
 
+- `BAI-Work-Defense-Deck.pptx`: 16-slide Chinese hackathon defense deck organized around the 100-point judging rubric.
+- `BAI-Work-Defense-Script.md`: slide-by-slide timing, delivery notes, and the three-minute live-demo playbook.
+- `defense-deck-source.cjs`: PptxGenJS source for the defense deck.
 - `BAI-Work-Project-Deck.pptx`: final PowerPoint deck.
 - `deck-source.mjs`: JavaScript ES module source that generates the deck with `@oai/artifact-tool`.
 - `.artifact-work/`: local artifact-tool workspace, generated previews, layout JSON, montage, and inspection output.
+
+## Defense Deck Structure
+
+The defense deck maps directly to the judging rubric:
+
+1. Cover and scoring map
+2. One-line pitch and problem
+3. Live product demo story
+4. Product completeness
+5. Stable runtime-host architecture
+6. Observable long-running task state machine
+7. Full AI agent loop
+8. Open-source ecosystem integration
+9. Trust and hooks safety boundary
+10. Cross-platform and test evidence
+11. Target users and real demand
+12. Commercial model hypotheses
+13. Ecosystem flywheel
+14. Twelve-week roadmap and metrics
+15. Three-minute live-demo playbook
+16. Judging-criteria recap
+
+Generate it from the project root with the bundled Codex presentation runtime:
+
+```bash
+NODE_PATH=/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules \
+  /Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node \
+  docs/presentation/defense-deck-source.cjs
+```
+
+## Defense Deck Validation
+
+Last checked on 2026-07-11:
+
+- Source generation passed and produced 16 slides.
+- The PPTX archive passed `unzip -t` with no compressed-data errors.
+- The archive contains 16 slide XML files and 16 speaker-note XML files.
+- LibreOffice converted the deck to a 16-page PDF without errors.
+- All 16 rendered pages were reviewed as a montage; high-density architecture,
+  AI-loop, business-model, roadmap, demo, and closing slides were also checked
+  individually at full resolution.
+- The deck source and speaker script contain no API key or legacy MIMO/Kun
+  product wording.
 
 ## Deck Structure
 

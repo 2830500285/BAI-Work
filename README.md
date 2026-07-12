@@ -7,7 +7,7 @@
 BAI Work is a desktop agent workbench built around the BAI Code runtime. It focuses on software engineering tasks such as coding, debugging, architecture design, document generation, planning, reviews, automation, and tool-assisted workflows.
 
 <p align="center">
-  <img src="docs/screenshots/bai-work-home.png" alt="BAI Work desktop home screen" width="960">
+  <img src="docs/screenshots/bai-work-home-current.png" alt="BAI Work desktop home screen" width="960">
 </p>
 
 ## Highlights
@@ -45,6 +45,8 @@ The public BAI Code documentation currently documents the CLI but does not publi
 
 - [BAI Work technical whitepaper (PDF)](docs/whitepaper/bai-work-whitepaper.pdf)
 - [BAI Work technical whitepaper (LaTeX source)](docs/whitepaper/bai-work-whitepaper.tex)
+- [BAI Work hackathon defense deck (PPTX)](docs/presentation/BAI-Work-Defense-Deck.pptx)
+- [BAI Work defense speaker script](docs/presentation/BAI-Work-Defense-Script.md)
 - [BAI Work project presentation (PPTX)](docs/presentation/BAI-Work-Project-Deck.pptx)
 
 ## Release
