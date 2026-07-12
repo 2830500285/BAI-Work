@@ -71,7 +71,7 @@ describe('MessageTimelineEmptyHero — runtime offline hero (issue #78)', () => 
     const waking = renderOfflineHero(null)
     expect(waking).toContain('is-waking')
     expect(waking).toContain('aria-label="BAI Work"')
-    expect(waking).toContain('>Work</span>')
+    expect(waking).toContain('ds-bai-work-wordmark')
     expect(waking).not.toContain('>BAI Work</span>')
     expect(waking).not.toContain('ds-runtime-wake-shell')
     expect(waking).not.toContain('ds-runtime-wake-kun')

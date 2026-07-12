@@ -122,7 +122,7 @@ describe('InitialSessionUsageHeatmap', () => {
     const html = render(state({ usage: usage(), loaded: true }))
 
     expect(html).toContain('aria-label="BAI Work"')
-    expect(html).toContain('>Work</span>')
+    expect(html).toContain('ds-bai-work-wordmark')
     expect(html).not.toContain('>BAI Work</span>')
     expect(html).not.toContain('Overview')
     expect(html).not.toContain('Daily BAI usage calendar')
@@ -331,7 +331,7 @@ describe('InitialSessionUsageHeatmap', () => {
     const html = render(state({ usage: usage(), loaded: true }))
 
     expect(html).toContain('aria-label="BAI Work"')
-    expect(html).toContain('>Work</span>')
+    expect(html).toContain('ds-bai-work-wordmark')
     expect(html).not.toContain('>BAI Work</span>')
     expect(html).not.toContain('Expand calendar')
     expect(html).not.toContain('Collapse calendar')

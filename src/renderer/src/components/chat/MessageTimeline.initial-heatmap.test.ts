@@ -34,7 +34,7 @@ describe('MessageTimeline initial heatmap empty hero routing', () => {
     const html = renderHero()
 
     expect(html).toContain('aria-label="BAI Work"')
-    expect(html).toContain('>Work</span>')
+    expect(html).toContain('ds-bai-work-wordmark')
     expect(html).not.toContain('>BAI Work</span>')
     expect(html).toContain('Start your agent rhythm')
     expect(html).not.toContain('Daily BAI usage calendar')

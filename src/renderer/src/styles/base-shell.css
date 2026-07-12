@@ -3132,6 +3132,14 @@ pre {
   width: 100%;
 }
 
+.ds-bai-work-wordmark {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  width: min(320px, calc(100vw - 112px));
+}
+
 .ds-mimo-mini-mark {
   align-items: center;
   background: #fffefa;
@@ -3145,11 +3153,11 @@ pre {
   width: 24px;
 }
 
-.ds-mimo-mini-mark img {
+.ds-bai-work-mini-image {
   display: block;
-  height: 18px;
+  height: auto;
   object-fit: contain;
-  width: 18px;
+  width: 20px;
 }
 
 .ds-mimo-mini-mark.is-active {

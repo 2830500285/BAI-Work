@@ -83,6 +83,8 @@ describe('BAI Work branding', () => {
   it('keeps generated BAI icon assets in place for app, mac, tray, and Windows packaging', () => {
     for (const relativePath of [
       'src/asset/img/bai-work-source.png',
+      'src/asset/img/bai-work-wordmark.png',
+      'src/asset/img/bai-work-mark.png',
       'src/asset/img/bai-work.png',
       'src/asset/img/bai-work-mac.png',
       'src/asset/img/bai-work-tray.png',
