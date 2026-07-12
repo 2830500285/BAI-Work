@@ -9,10 +9,11 @@ const wordmark = path.join(root, 'src/asset/img/bai-work-wordmark.png')
 const homeScreenshot = path.join(root, 'docs/screenshots/bai-work-home-current.png')
 
 const pptx = new PptxGenJS()
-pptx.layout = 'LAYOUT_WIDE'
+pptx.defineLayout({ name: 'BAI_WIDE', width: 13.333, height: 7.5 })
+pptx.layout = 'BAI_WIDE'
 pptx.author = 'BAI Work'
 pptx.company = 'BAI Work'
-pptx.subject = 'BAI Work Genesis Hackathon defense deck'
+pptx.subject = 'BAI Work project defense deck'
 pptx.title = 'BAI Work 项目答辩'
 pptx.lang = 'zh-CN'
 pptx.theme = {
@@ -20,12 +21,10 @@ pptx.theme = {
   bodyFontFace: 'PingFang SC',
   lang: 'zh-CN'
 }
-pptx.defineLayout({ name: 'BAI_WIDE', width: 13.333, height: 7.5 })
-pptx.layout = 'BAI_WIDE'
 
 const S = pptx.ShapeType
-const W = 13.333
 const H = 7.5
+const TOTAL_SLIDES = 19
 const C = {
   ink: '171A1F',
   softInk: '3E4650',
@@ -51,63 +50,60 @@ const C = {
   slateSoft: 'E5E9EC'
 }
 
-const scoreColor = {
-  '技术创新性': C.teal,
-  '产品完成度': C.blue,
-  '商业与生态潜力': C.coral,
-  'AI / Web3 应用': C.amber,
-  '展示表达能力': C.green
-}
-
 const scriptSections = []
 
-function addText(slide, text, x, y, w, h, options = {}) {
-  slide.addText(text, {
-    x,
-    y,
-    w,
-    h,
-    fontFace: options.fontFace || 'PingFang SC',
-    fontSize: options.fontSize || 18,
-    color: options.color || C.ink,
-    bold: options.bold || false,
-    margin: options.margin === undefined ? 0 : options.margin,
-    breakLine: false,
+function addText(slide, value, x, y, w, h, options) {
+  const opts = options || {}
+  slide.addText(value, {
+    x: x,
+    y: y,
+    w: w,
+    h: h,
+    fontFace: opts.fontFace || 'PingFang SC',
+    fontSize: opts.fontSize || 18,
+    color: opts.color || C.ink,
+    bold: opts.bold || false,
+    margin: opts.margin === undefined ? 0 : opts.margin,
     fit: 'shrink',
-    valign: options.valign || 'mid',
-    align: options.align || 'left',
+    valign: opts.valign || 'mid',
+    align: opts.align || 'left',
+    breakLine: false,
     isTextBox: true,
-    ...options
+    ...opts
   })
 }
 
-function addRect(slide, x, y, w, h, fill, line = fill, radius = false) {
-  slide.addShape(radius ? S.roundRect : S.rect, {
-    x,
-    y,
-    w,
-    h,
-    rectRadius: radius ? 0.08 : undefined,
+function addRect(slide, x, y, w, h, fill, line, rounded) {
+  slide.addShape(rounded ? S.roundRect : S.rect, {
+    x: x,
+    y: y,
+    w: w,
+    h: h,
+    rectRadius: rounded ? 0.08 : undefined,
     fill: { color: fill },
-    line: { color: line, width: line === fill ? 0 : 1 }
+    line: { color: line || fill, width: line && line !== fill ? 1 : 0 }
   })
 }
 
-function addLine(slide, x, y, w, h, color = C.line, width = 1, endArrowType) {
+function addLine(slide, x, y, w, h, color, width, arrow) {
   slide.addShape(S.line, {
-    x,
-    y,
-    w,
-    h,
-    line: { color, width, endArrowType }
+    x: x,
+    y: y,
+    w: w,
+    h: h,
+    line: {
+      color: color || C.line,
+      width: width || 1,
+      endArrowType: arrow
+    }
   })
 }
 
-function addPill(slide, text, x, y, w, fill, color = C.ink, fontSize = 11) {
+function addPill(slide, value, x, y, w, fill, color, fontSize) {
   addRect(slide, x, y, w, 0.34, fill, fill, true)
-  addText(slide, text, x + 0.08, y + 0.01, w - 0.16, 0.3, {
-    fontSize,
-    color,
+  addText(slide, value, x + 0.08, y + 0.01, w - 0.16, 0.3, {
+    fontSize: fontSize || 10.5,
+    color: color || C.ink,
     bold: true,
     align: 'center'
   })
@@ -128,658 +124,1143 @@ function addImageContain(slide, imagePath, ratio, x, y, w, h) {
   })
 }
 
-function addHeader(slide, number, title, dimension, points, accent, eyebrow) {
-  addText(slide, eyebrow || `BAI WORK / ${String(number).padStart(2, '0')}`, 0.58, 0.33, 3.2, 0.25, {
+function addSanitizedScreenshot(slide, x, y, w, h) {
+  addRect(slide, x, y, w, h, C.white, C.line, true)
+  const ratio = 1280 / 840
+  const innerX = x + 0.08
+  const innerY = y + 0.08
+  const innerW = w - 0.16
+  const innerH = h - 0.16
+  const boxRatio = innerW / innerH
+  const imageW = ratio > boxRatio ? innerW : innerH * ratio
+  const imageH = ratio > boxRatio ? innerW / ratio : innerH
+  const imageX = innerX + (innerW - imageW) / 2
+  const imageY = innerY + (innerH - imageH) / 2
+  const overlayH = Math.min(1.15, imageH * 0.28)
+
+  slide.addImage({ path: homeScreenshot, x: imageX, y: imageY, w: imageW, h: imageH })
+  addRect(slide, imageX, imageY + imageH - overlayH, imageW, overlayH, C.paper, C.paper)
+  addText(slide, 'BAI Work · 项目级桌面工作台', imageX + 0.2, imageY + imageH - overlayH / 2 - 0.14, imageW - 0.4, 0.28, {
+    fontSize: 11,
+    color: C.slate,
+    bold: true,
+    align: 'center'
+  })
+}
+
+function baseSlide(color) {
+  const slide = pptx.addSlide()
+  slide.background = { color: color || C.bg }
+  return slide
+}
+
+function addHeader(slide, number, title, section, accent, eyebrow) {
+  addText(slide, eyebrow || 'BAI WORK / ' + String(number).padStart(2, '0'), 0.58, 0.33, 4.4, 0.25, {
     fontFace: 'Aptos',
     fontSize: 10,
     color: accent,
     bold: true,
     charSpacing: 1.2
   })
-  addText(slide, title, 0.58, 0.68, 10.7, 0.7, {
-    fontSize: 28,
+  addText(slide, title, 0.58, 0.68, 10.8, 0.68, {
+    fontSize: 27,
     color: C.ink,
     bold: true
   })
-  addPill(slide, `${dimension} · ${points}`, 10.95, 0.35, 1.8, scoreColor[dimension] || accent, C.white, 10)
+  addPill(slide, section, 10.85, 0.35, 1.9, accent, C.white, 10)
   addLine(slide, 0.58, 1.42, 12.15, 0, C.line, 1)
 }
 
 function addFooter(slide, number, source) {
-  addText(slide, source || 'BAI Work · Genesis Hackathon', 0.58, 7.16, 8.8, 0.18, {
+  addText(slide, source || 'BAI Work · Genesis Hackathon', 0.58, 7.16, 9.9, 0.18, {
     fontFace: 'Aptos',
-    fontSize: 8.5,
+    fontSize: 8.3,
     color: C.muted
   })
-  addText(slide, `${String(number).padStart(2, '0')} / 16`, 11.82, 7.14, 0.9, 0.2, {
+  addText(slide, String(number).padStart(2, '0') + ' / ' + TOTAL_SLIDES, 11.75, 7.14, 0.98, 0.2, {
     fontFace: 'Aptos',
-    fontSize: 8.5,
+    fontSize: 8.3,
     color: C.muted,
     align: 'right'
   })
 }
 
 function addNotes(slide, number, title, duration, lines) {
-  const notes = [`${title}（建议 ${duration}）`, ...lines].join('\n')
-  slide.addNotes(notes)
-  scriptSections.push(`## ${number}. ${title}（${duration}）\n\n${lines.map((line) => `- ${line}`).join('\n')}\n`)
+  const noteText = [title + '（建议 ' + duration + '）'].concat(lines).join('\n')
+  slide.addNotes(noteText)
+  scriptSections.push(
+    '## ' + number + '. ' + title + '（' + duration + '）\n\n' +
+    lines.map(function (line) { return '- ' + line }).join('\n') +
+    '\n'
+  )
 }
 
-function baseSlide(color = C.bg) {
-  const slide = pptx.addSlide()
-  slide.background = { color }
-  return slide
-}
-
-function addBulletList(slide, items, x, y, w, lineHeight = 0.52, color = C.softInk, fontSize = 16) {
-  items.forEach((item, index) => {
-    addRect(slide, x, y + index * lineHeight + 0.16, 0.08, 0.08, C.teal)
+function addBulletList(slide, items, x, y, w, lineHeight, color, fontSize, accent) {
+  items.forEach(function (item, index) {
+    addRect(slide, x, y + index * lineHeight + 0.15, 0.08, 0.08, accent || C.teal)
     addText(slide, item, x + 0.2, y + index * lineHeight, w - 0.2, lineHeight, {
-      fontSize,
-      color,
+      fontSize: fontSize || 14,
+      color: color || C.softInk,
       valign: 'top'
     })
   })
 }
 
 function addMetric(slide, value, label, x, y, w, accent, note) {
-  addText(slide, value, x, y, w, 0.56, {
+  addText(slide, value, x, y, w, 0.55, {
     fontFace: 'Aptos Display',
-    fontSize: 30,
+    fontSize: 29,
+    color: accent,
+    bold: true,
+    align: 'center'
+  })
+  addText(slide, label, x, y + 0.52, w, 0.3, {
+    fontSize: 12,
+    color: C.ink,
+    bold: true,
+    align: 'center'
+  })
+  if (note) {
+    addText(slide, note, x, y + 0.84, w, 0.34, {
+      fontSize: 9,
+      color: C.muted,
+      align: 'center',
+      valign: 'top'
+    })
+  }
+}
+
+function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
+  addRect(slide, x, y, w, 1.2, fill, fill, true)
+  addText(slide, String(index).padStart(2, '0'), x + 0.18, y + 0.18, 0.42, 0.3, {
+    fontFace: 'Aptos',
+    fontSize: 11,
     color: accent,
     bold: true
   })
-  addText(slide, label, x, y + 0.54, w, 0.3, {
-    fontSize: 12,
+  addText(slide, title, x + 0.7, y + 0.15, w - 0.88, 0.34, {
+    fontSize: 16,
     color: C.ink,
     bold: true
   })
-  if (note) addText(slide, note, x, y + 0.88, w, 0.38, { fontSize: 9.5, color: C.muted, valign: 'top' })
+  addText(slide, body, x + 0.18, y + 0.65, w - 0.36, 0.35, {
+    fontSize: 11,
+    color: C.softInk,
+    valign: 'top'
+  })
 }
 
 // 01 Cover
 {
   const slide = baseSlide(C.black)
   addRect(slide, 7.55, 0, 5.783, H, C.paper)
-  addImageContain(slide, homeScreenshot, 1280 / 840, 7.72, 0.48, 5.28, 5.6)
-  addRect(slide, 7.55, 6.15, 5.783, 1.35, C.slate)
-  addText(slide, 'GENESIS HACKATHON', 0.7, 0.6, 3.5, 0.25, {
+  addSanitizedScreenshot(slide, 7.76, 0.52, 5.2, 5.55)
+  addRect(slide, 7.55, 6.18, 5.783, 1.32, C.slate)
+  addText(slide, 'GENESIS HACKATHON', 0.7, 0.6, 3.6, 0.25, {
     fontFace: 'Aptos',
     fontSize: 11,
     color: '7EC5C1',
     bold: true,
     charSpacing: 1.8
   })
-  addImageContain(slide, wordmark, 920 / 240, 0.68, 1.2, 5.55, 1.45)
-  addText(slide, '让 AI Agent 真正完成\n桌面工程任务', 0.7, 2.76, 6.1, 1.35, {
-    fontSize: 32,
+  addImageContain(slide, wordmark, 920 / 240, 0.68, 1.18, 5.7, 1.5)
+  addText(slide, '项目级轻量 Agent 工作台', 0.72, 2.9, 6.25, 0.62, {
+    fontSize: 31,
     color: C.white,
-    bold: true,
-    breakLine: true,
-    valign: 'top'
+    bold: true
   })
-  addText(slide, 'BAI Code runtime · 项目上下文 · 工具执行 · 安全生态', 0.72, 4.35, 6.1, 0.45, {
-    fontSize: 15,
+  addText(slide, '更短执行链 · 更小故障域 · 更清晰产物闭环', 0.72, 3.68, 6.15, 0.42, {
+    fontSize: 16,
     color: 'C5CDD4'
   })
-  const coverScores = [
-    ['技术创新', '20'],
-    ['产品完成', '25'],
-    ['商业生态', '20'],
-    ['AI 应用', '20'],
-    ['展示表达', '15']
+  const tags = [
+    ['30 秒配置', C.teal],
+    ['单项目执行', C.blue],
+    ['Token Economy', C.amber],
+    ['EBAI', C.coral],
+    ['三平台交付', C.green]
   ]
-  coverScores.forEach(([label, value], index) => {
-    const x = 0.72 + index * 1.23
-    addText(slide, value, x, 5.38, 0.58, 0.42, { fontFace: 'Aptos Display', fontSize: 20, color: '7EC5C1', bold: true })
-    addText(slide, label, x, 5.8, 1.05, 0.28, { fontSize: 9.5, color: 'C5CDD4' })
+  tags.forEach(function (item, index) {
+    const row = index > 2 ? 1 : 0
+    const col = row === 0 ? index : index - 3
+    addPill(slide, item[0], 0.72 + col * 1.65, 4.62 + row * 0.55, 1.42, item[1], C.white, 10)
   })
-  addText(slide, '项目答辩 · 2026.07', 0.72, 6.78, 3.1, 0.25, { fontSize: 10.5, color: '89939D' })
-  addText(slide, '可运行产品，不是概念原型', 7.98, 6.48, 4.65, 0.35, {
+  addText(slide, '项目答辩 · 2026.07', 0.72, 6.78, 3.1, 0.25, {
+    fontSize: 10.5,
+    color: '89939D'
+  })
+  addText(slide, '从 API Key 到可验收产物', 7.98, 6.48, 4.65, 0.35, {
     fontSize: 18,
     color: C.white,
     bold: true,
     align: 'center'
   })
-  addText(slide, 'Mac Intel · Mac Apple Silicon · Windows x64', 7.98, 6.87, 4.65, 0.26, {
+  addText(slide, 'Mac Intel · Mac Apple Silicon · Windows x64', 7.98, 6.88, 4.65, 0.26, {
     fontFace: 'Aptos',
     fontSize: 10,
     color: 'C8D1D8',
     align: 'center'
   })
-  addNotes(slide, 1, '封面', '30 秒', [
-    '开场一句：BAI Work 不是一个新的聊天框，而是让 BAI Code 在真实桌面项目里持续完成任务的工作台。',
-    '先建立可信度：当前版本已经有三平台产物、可运行的 Mac Intel 应用和完整测试。',
-    '提示评委：接下来所有内容都按五项评分标准展开，并在最后逐项回收证据。'
+  addNotes(slide, 1, '封面', '25 秒', [
+    '开场一句：BAI Work 不是另一个聊天入口，而是面向真实项目交付的轻量桌面工作台。',
+    '核心差异是把执行链收敛到本地项目：配置更短、过程可见、产物可验收。',
+    '当前已有可运行应用、三平台构建路径和完整自动化验证。'
   ])
 }
 
-// 02 One-line pitch and problem
+// 02 Product thesis
 {
   const slide = baseSlide()
-  addHeader(slide, 2, '一句话：把可用 CLI 变成可交付桌面工作流', '技术创新性', '20', C.teal, 'WHY BAI WORK')
-  addText(slide, '开发者真正缺的不是另一个模型入口，而是一个能保留上下文、展示过程、组织产物并安全扩展的 Agent 工作面。', 0.68, 1.7, 11.95, 0.72, {
-    fontSize: 20,
-    bold: true,
+  addHeader(slide, 2, '为什么需要 BAI Work：项目任务要求“连续交付”', '产品定义', C.teal, 'WHY BAI WORK')
+  addText(slide, '真实知识工作不是一次问答，而是上下文进入、工具执行、过程反馈、产物审阅与后续复用的连续系统。', 0.9, 1.68, 11.55, 0.58, {
+    fontSize: 19,
     color: C.softInk,
+    bold: true,
     align: 'center'
   })
   const problems = [
-    ['01', '上下文碎片化', '项目、Git、文件、历史会话散落在终端和窗口之间。', C.coralSoft, C.coral],
-    ['02', '执行过程不可见', '长任务只看到等待或原始日志，无法判断进度与失败位置。', C.amberSoft, C.amber],
-    ['03', '能力扩展不可信', '命令、skills、hooks 很强，但安装即执行会扩大本地风险。', C.blueSoft, C.blue]
+    ['上下文割裂', '项目、文件、版本状态与会话历史分散，重复传递成本高。', C.coralSoft, C.coral],
+    ['过程不可观测', '长任务只有等待或原始日志，难以判断当前状态和失败位置。', C.amberSoft, C.amber],
+    ['交付不可验收', '回答与工具过程混在一起，产物、差异和验证证据缺少结构。', C.blueSoft, C.blue]
   ]
-  problems.forEach(([n, title, body, fill, accent], index) => {
-    const x = 0.7 + index * 4.13
-    addRect(slide, x, 2.72, 3.8, 2.45, fill, fill, true)
-    addText(slide, n, x + 0.24, 2.95, 0.6, 0.4, { fontFace: 'Aptos Display', fontSize: 20, color: accent, bold: true })
-    addText(slide, title, x + 0.24, 3.42, 3.2, 0.42, { fontSize: 20, color: C.ink, bold: true })
-    addText(slide, body, x + 0.24, 4.02, 3.25, 0.82, { fontSize: 14, color: C.softInk, valign: 'top' })
+  problems.forEach(function (item, index) {
+    const x = 0.72 + index * 4.12
+    addRect(slide, x, 2.62, 3.78, 2.38, item[2], item[2], true)
+    addText(slide, '0' + (index + 1), x + 0.24, 2.88, 0.55, 0.35, {
+      fontFace: 'Aptos Display',
+      fontSize: 18,
+      color: item[3],
+      bold: true
+    })
+    addText(slide, item[0], x + 0.24, 3.38, 3.2, 0.4, {
+      fontSize: 20,
+      color: C.ink,
+      bold: true
+    })
+    addText(slide, item[1], x + 0.24, 4.0, 3.25, 0.72, {
+      fontSize: 13.5,
+      color: C.softInk,
+      valign: 'top'
+    })
   })
-  addRect(slide, 1.28, 5.55, 10.78, 0.92, C.slate, C.slate, true)
-  addText(slide, 'BAI Work 的解法：项目优先 + 可观测执行 + 可审阅产物 + 受信任生态', 1.55, 5.72, 10.25, 0.5, {
-    fontSize: 21,
+  addRect(slide, 1.15, 5.55, 11.02, 0.92, C.slate, C.slate, true)
+  addText(slide, 'BAI Work = 项目上下文 + 本地执行 + 可观测状态机 + 可审阅产物 + 受信任能力层', 1.42, 5.72, 10.48, 0.5, {
+    fontSize: 19,
     color: C.white,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 2, '证据：README.md · runtime adapter · EBAI 安全策略')
-  addNotes(slide, 2, '问题与一句话方案', '45 秒', [
-    '不要从功能清单开始，先说清开发者为什么需要它。',
-    '三个问题分别对应产品主流程、可观测性创新和生态安全设计。',
-    '强调差异：BAI Work 不是把网页套壳，而是把执行、交互、文件与发布组织成一个连续工作流。'
+  addFooter(slide, 2, '产品原则：以任务到产物的闭环效率为主目标')
+  addNotes(slide, 2, '产品问题与定义', '35 秒', [
+    '不要从功能数量开始，先说明真实项目任务为什么需要连续交付。',
+    'BAI Work 的目标函数是缩短任务到产物的闭环，而不是覆盖所有通信场景。',
+    '这条目标函数决定了后续的轻量架构、过程可观测和 Token Economy。'
   ])
 }
 
-// 03 Demo flow
+// 03 Thirty-second setup
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 3, '现场演示：从一句任务到可验收产物', '展示表达能力', '15', C.green, 'DEMO STORY')
-  addRect(slide, 0.66, 1.68, 7.15, 4.8, C.white, C.line, true)
-  addImageContain(slide, homeScreenshot, 1280 / 840, 0.86, 1.88, 6.75, 4.4)
-  addPill(slide, '演示任务', 8.18, 1.76, 1.05, C.greenSoft, C.green, 10)
-  addText(slide, '“检查当前项目，修复问题，展示推进过程，并交付可验证结果。”', 8.18, 2.18, 4.35, 0.82, {
+  addHeader(slide, 3, '30 秒配置路径：API Key 进入，模型能力自动就绪', '极简上手', C.green, 'THIRTY-SECOND ONBOARDING')
+  addPill(slide, '典型路径', 0.72, 1.7, 1.08, C.greenSoft, C.green, 10)
+  const steps = [
+    ['输入 API Key', 'Main-Process Credential Isolation'],
+    ['探测服务', 'Endpoint Canonicalization'],
+    ['拉取模型', 'GET /v1/models'],
+    ['能力分类', 'Capability-Aware Discovery'],
+    ['保存并使用', 'Idempotent Set Merge']
+  ]
+  steps.forEach(function (item, index) {
+    const x = 0.72 + index * 2.48
+    addRect(slide, x, 2.24, 2.06, 1.52, index === 4 ? C.greenSoft : C.white, index === 4 ? C.green : C.line, true)
+    addText(slide, index === 0 ? '0s' : String(index * 6) + 's', x + 0.16, 2.43, 0.45, 0.28, {
+      fontFace: 'Aptos',
+      fontSize: 10,
+      color: index === 4 ? C.green : C.teal,
+      bold: true
+    })
+    addText(slide, item[0], x + 0.16, 2.82, 1.72, 0.34, {
+      fontSize: 16,
+      color: C.ink,
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[1], x + 0.16, 3.25, 1.72, 0.28, {
+      fontFace: 'Aptos',
+      fontSize: 8.5,
+      color: C.muted,
+      align: 'center'
+    })
+    if (index < steps.length - 1) addLine(slide, x + 2.08, 2.98, 0.32, 0, C.muted, 1.2, 'triangle')
+  })
+  addRect(slide, 0.72, 4.35, 7.35, 1.75, C.white, C.line, true)
+  addText(slide, '实现机制', 0.98, 4.62, 1.05, 0.32, { fontSize: 14, color: C.green, bold: true })
+  addBulletList(slide, [
+    '凭据只在主进程中参与请求，避免渲染层暴露与跨域约束。',
+    '统一规范化 Base URL，8 秒模型列表超时与 10 秒连通性探测。',
+    '去重模型 ID，按文本对话能力过滤，并与已有配置幂等合并。'
+  ], 2.1, 4.55, 5.62, 0.47, C.softInk, 12, C.green)
+  addRect(slide, 8.35, 4.35, 4.25, 1.75, C.slate, C.slate, true)
+  addText(slide, '用户感知', 8.68, 4.62, 3.58, 0.34, { fontSize: 14, color: '8FD4CF', bold: true, align: 'center' })
+  addText(slide, '无需编辑配置文件\n无需手工录入模型\n无需理解运行时参数', 8.68, 5.05, 3.58, 0.8, {
+    fontSize: 17,
+    color: C.white,
+    bold: true,
+    align: 'center',
+    breakLine: true
+  })
+  addText(slide, '实际完成时间取决于网络与 API 可用性；30 秒是典型配置目标，不是网络 SLA。', 1.05, 6.48, 11.25, 0.34, {
+    fontSize: 11,
+    color: C.muted,
+    align: 'center'
+  })
+  addFooter(slide, 3, '实现证据：provider connection · model discovery · protocol URL normalization')
+  addNotes(slide, 3, '30 秒配置路径', '45 秒', [
+    '用户只需提供 API Key，主进程完成服务探测、模型拉取、能力分类和保存。',
+    '技术上使用凭据隔离、端点规范化、能力感知发现与幂等集合合并。',
+    '强调“简单”不是隐藏能力，而是把配置复杂度吸收到产品内部。'
+  ])
+}
+
+// 04 Demo story
+{
+  const slide = baseSlide()
+  addHeader(slide, 4, '现场演示：从一句任务到可验收产物', '用户流程', C.blue, 'DEMO STORY')
+  addSanitizedScreenshot(slide, 0.66, 1.68, 7.15, 4.88)
+  addPill(slide, '演示任务', 8.18, 1.78, 1.05, C.blueSoft, C.blue, 10)
+  addText(slide, '“检查当前项目，持续展示推进过程，并交付可验证结果。”', 8.18, 2.2, 4.35, 0.75, {
     fontSize: 18,
     color: C.ink,
     bold: true,
     valign: 'top'
   })
-  const demoSteps = [
-    ['1', '选择 workspace', '项目 / Git / 文件进入上下文'],
-    ['2', '持续执行', '计划、工具步骤、等待与错误可见'],
-    ['3', '审阅结果', '文件、diff、文档和最终摘要分离'],
-    ['4', '复用能力', '记忆、skills、自动化沉淀到后续任务']
+  const flow = [
+    ['选择项目', '项目、文件与版本状态进入上下文'],
+    ['启动执行', '规划、工具动作与等待状态持续可见'],
+    ['审阅结果', '回答、产物、差异与验证证据分离'],
+    ['沉淀能力', '规则、技能与记忆进入后续任务']
   ]
-  demoSteps.forEach(([n, title, body], index) => {
-    const y = 3.2 + index * 0.78
-    addRect(slide, 8.18, y, 0.4, 0.4, index === 3 ? C.green : C.teal, index === 3 ? C.green : C.teal, true)
-    addText(slide, n, 8.18, y, 0.4, 0.4, { fontFace: 'Aptos', fontSize: 12, color: C.white, bold: true, align: 'center' })
-    addText(slide, title, 8.75, y - 0.03, 1.45, 0.3, { fontSize: 14, color: C.ink, bold: true })
-    addText(slide, body, 8.75, y + 0.28, 3.65, 0.3, { fontSize: 10.5, color: C.muted })
+  flow.forEach(function (item, index) {
+    const y = 3.18 + index * 0.79
+    addRect(slide, 8.18, y, 0.42, 0.42, index === 3 ? C.green : C.blue, index === 3 ? C.green : C.blue, true)
+    addText(slide, String(index + 1), 8.18, y, 0.42, 0.42, {
+      fontFace: 'Aptos',
+      fontSize: 12,
+      color: C.white,
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[0], 8.78, y - 0.03, 1.35, 0.3, { fontSize: 14, color: C.ink, bold: true })
+    addText(slide, item[1], 8.78, y + 0.28, 3.55, 0.32, { fontSize: 10.5, color: C.muted })
   })
-  addRect(slide, 8.18, 6.35, 4.35, 0.45, C.slateSoft, C.slateSoft, true)
-  addText(slide, '演示目标：3 分钟内证明“能做、看得见、可验收”', 8.35, 6.42, 4.0, 0.28, { fontSize: 11.5, color: C.slate, bold: true, align: 'center' })
-  addFooter(slide, 3, '演示使用当前 Mac Intel x86_64 构建')
-  addNotes(slide, 3, '现场演示路径', '50 秒 + 3 分钟演示', [
-    '先展示最新首页，说明这是当前打包后的 Mac Intel 应用。',
-    '现场只跑一条主流程，不在设置页来回跳转：选择项目、发送任务、展开步骤、打开产物。',
-    '若网络异常，使用已生成产物和 packaged runtime health 作为兜底证据，不在台上排查网络。'
+  addFooter(slide, 4, '现场演示使用当前 Mac Intel x86_64 构建')
+  addNotes(slide, 4, '现场演示路径', '35 秒 + 3 分钟演示', [
+    '演示只跑一条主流程：选项目、发任务、展开步骤、打开产物。',
+    '每一步都说用户获得了什么信息，不在现场展开内部实现。',
+    '网络异常时切换到打包运行时健康检查、预生成产物与最新界面证据。'
   ])
 }
 
-// 04 Product completion
-{
-  const slide = baseSlide()
-  addHeader(slide, 4, '产品完成度：一条主流程，六个可演示能力', '产品完成度', '25', C.blue, 'PRODUCT COMPLETENESS')
-  const capabilities = [
-    ['项目与会话', 'Workspace、历史、Git 上下文'],
-    ['模型与 Provider', 'BAI 默认 + OpenAI-compatible'],
-    ['实时进度', '步骤、工具摘要、错误恢复'],
-    ['文件与产物', '引用、预览、diff、文档'],
-    ['长期记忆', '用户 / 工作区 / 项目作用域'],
-    ['插件与自动化', 'Skills、EBAI、MCP、任务调度']
-  ]
-  capabilities.forEach(([title, body], index) => {
-    const col = index % 3
-    const row = Math.floor(index / 3)
-    const x = 0.7 + col * 4.16
-    const y = 1.82 + row * 1.72
-    addRect(slide, x, y, 3.78, 1.38, index < 3 ? C.blueSoft : C.tealSoft, index < 3 ? C.blueSoft : C.tealSoft, true)
-    addText(slide, `0${index + 1}`, x + 0.22, y + 0.18, 0.46, 0.3, { fontFace: 'Aptos', fontSize: 12, color: index < 3 ? C.blue : C.teal, bold: true })
-    addText(slide, title, x + 0.72, y + 0.16, 2.72, 0.34, { fontSize: 17, color: C.ink, bold: true })
-    addText(slide, body, x + 0.22, y + 0.68, 3.3, 0.42, { fontSize: 12.5, color: C.softInk })
-  })
-  addRect(slide, 0.7, 5.5, 12.0, 1.02, C.white, C.line, true)
-  addMetric(slide, '3', '桌面目标', 1.08, 5.68, 1.7, C.blue, 'mac-x64 / mac-arm64 / win-x64')
-  addMetric(slide, '0.1.1', '公开版本', 3.45, 5.68, 1.7, C.teal, '同源构建与 release assets')
-  addMetric(slide, '8', '本地运行时路由', 5.82, 5.68, 1.7, C.amber, '稳定 /v1/* 桌面边界')
-  addMetric(slide, '78', '内置技能入口', 8.19, 5.68, 1.7, C.coral, '其中 73 个 Hermes-derived')
-  addMetric(slide, '1', '连续工作流', 10.56, 5.68, 1.7, C.green, '从任务到产物再到复用')
-  addFooter(slide, 4, '当前实现证据：README · release v0.1.1 · resources/skills')
-  addNotes(slide, 4, '产品完成度', '45 秒', [
-    '从用户流程讲完成度，而不是从代码模块讲完成度。',
-    '六项能力都在同一应用里可操作；三平台和公开版本证明不是一次性 Demo。',
-    '强调目前最成熟的是 Mac Intel，其他平台已有同源产物和原生 CI smoke。'
-  ])
-}
-
-// 05 Architecture innovation
+// 05 Product completeness
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 5, '技术创新 1：稳定桌面边界隔离上游变化', '技术创新性', '20', C.teal, 'ARCHITECTURE')
-  const boxes = [
-    ['Renderer', '工作台 UI\n会话 / 设置 / 审阅', 0.72, C.blueSoft, C.blue],
-    ['Preload', '最小 IPC\n受控桌面能力', 3.18, C.slateSoft, C.slate],
-    ['Main Host', '设置 / 文件 / Git\n运行时生命周期', 5.64, C.tealSoft, C.teal],
-    ['/v1/* + SSE', '稳定本地契约\n进度与线程边界', 8.1, C.amberSoft, C.amber],
-    ['BAI Code', 'CLI 0.9.1 today\nfuture service', 10.56, C.coralSoft, C.coral]
+  addHeader(slide, 5, '产品完成度：一个工作面覆盖完整任务生命周期', '产品能力', C.blue, 'PRODUCT COMPLETENESS')
+  const capabilities = [
+    ['项目与会话', 'Workspace、历史与版本上下文'],
+    ['模型与服务', 'BAI 默认与标准兼容协议'],
+    ['实时进度', '步骤、工具摘要与错误恢复'],
+    ['文件与产物', '引用、预览、差异与文档'],
+    ['长期记忆', '用户、工作区与项目作用域'],
+    ['能力扩展', 'EBAI、技能与任务自动化']
   ]
-  boxes.forEach(([title, body, x, fill, accent], index) => {
-    addRect(slide, x, 2.18, 1.98, 1.58, fill, fill, true)
-    addText(slide, title, x + 0.12, 2.43, 1.74, 0.34, { fontFace: 'Aptos', fontSize: 16, color: accent, bold: true, align: 'center' })
-    addText(slide, body, x + 0.14, 2.94, 1.7, 0.58, { fontSize: 11.5, color: C.softInk, align: 'center', breakLine: true })
-    if (index < boxes.length - 1) addLine(slide, x + 2.03, 2.97, 0.38, 0, C.muted, 1.5, 'triangle')
+  capabilities.forEach(function (item, index) {
+    const col = index % 3
+    const row = Math.floor(index / 3)
+    addStepCard(
+      slide,
+      index + 1,
+      item[0],
+      item[1],
+      0.72 + col * 4.13,
+      1.82 + row * 1.5,
+      3.78,
+      row === 0 ? C.blueSoft : C.tealSoft,
+      row === 0 ? C.blue : C.teal
+    )
   })
-  addRect(slide, 0.72, 4.44, 7.55, 1.4, C.white, C.line, true)
-  addText(slide, '创新点', 0.98, 4.68, 0.9, 0.3, { fontSize: 14, color: C.teal, bold: true })
-  addText(slide, '把上游 CLI / service 的变化收敛在 Runtime Host 内部，Renderer 不需要随着协议反复重写。', 1.9, 4.62, 5.98, 0.48, { fontSize: 16, color: C.ink, bold: true })
-  addText(slide, '当前官方未公开 session / event / permission / question 桌面协议；BAI Work 明确暴露这一边界，不把兼容桥伪装成官方能力。', 0.98, 5.18, 6.88, 0.42, { fontSize: 11.5, color: C.muted, valign: 'top' })
-  addRect(slide, 8.55, 4.44, 4.05, 1.4, C.slate, C.slate, true)
-  addText(slide, '差异化结果', 8.85, 4.68, 1.3, 0.3, { fontSize: 14, color: '8FD4CF', bold: true })
-  addText(slide, '可替换 runtime\n不牺牲桌面连续性', 8.85, 5.05, 3.38, 0.62, { fontSize: 20, color: C.white, bold: true, breakLine: true })
-  addFooter(slide, 5, '证据：src/main/runtime/bai-work-adapter.ts · preload IPC · renderer client')
-  addNotes(slide, 5, '稳定桌面边界', '55 秒', [
-    '先从左到右讲五层，每层只说一句职责。',
-    '核心创新不是“用了 Electron”，而是把不稳定的上游协议封装在可替换 Host 内。',
-    '主动说明官方协议缺口能增强可信度，也解释为什么当前选择兼容桥而不是硬编码不存在的 service。'
+  addRect(slide, 0.72, 5.05, 11.88, 1.42, C.white, C.line, true)
+  addMetric(slide, '3', '桌面目标', 0.98, 5.28, 1.8, C.blue, 'mac-x64 / mac-arm64 / win-x64')
+  addMetric(slide, '8', '本地运行时路由', 3.3, 5.28, 1.8, C.teal, '稳定的桌面服务边界')
+  addMetric(slide, '277', '可迁移技能', 5.62, 5.28, 1.8, C.amber, 'EBAI 可映射 surface')
+  addMetric(slide, '101', '去重命令', 7.94, 5.28, 1.8, C.coral, '面向斜杠命令入口')
+  addMetric(slide, '1', '连续工作流', 10.26, 5.28, 1.8, C.green, '任务到产物再到复用')
+  addFooter(slide, 5, '当前实现证据：README · runtime adapter · EBAI mapping tests')
+  addNotes(slide, 5, '产品完成度', '40 秒', [
+    '完成度从用户生命周期衡量：配置、执行、观察、审阅、沉淀都在一个工作面完成。',
+    '三平台目标和稳定本地服务边界证明它不是一次性原型。',
+    'EBAI 的数量只表示可迁移 surface，实际安装仍受安全策略与用户选择约束。'
   ])
 }
 
-// 06 Observability
+// 06 Architecture
 {
   const slide = baseSlide()
-  addHeader(slide, 6, '技术创新 2：把长任务过程变成可观测状态机', '技术创新性', '20', C.teal, 'RUNTIME OBSERVABILITY')
+  addHeader(slide, 6, '技术实现：单一 Runtime Host 收敛桌面复杂度', '系统架构', C.teal, 'LIGHTWEIGHT RUNTIME ARCHITECTURE')
+  const boxes = [
+    ['Renderer', '工作台 UI\n会话 / 设置 / 审阅', C.blueSoft, C.blue],
+    ['Preload', '最小 IPC\n受控桌面能力', C.slateSoft, C.slate],
+    ['Main Host', '凭据 / 文件 / 生命周期\n单一运行时入口', C.tealSoft, C.teal],
+    ['Loopback API', '稳定 /v1/*\nSSE 事件边界', C.amberSoft, C.amber],
+    ['BAI Code', '模型调用\n工具执行 / 上下文压缩', C.coralSoft, C.coral]
+  ]
+  boxes.forEach(function (item, index) {
+    const x = 0.72 + index * 2.47
+    addRect(slide, x, 2.12, 2.02, 1.72, item[2], item[2], true)
+    addText(slide, item[0], x + 0.12, 2.38, 1.78, 0.34, {
+      fontFace: 'Aptos',
+      fontSize: 16,
+      color: item[3],
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[1], x + 0.14, 2.92, 1.74, 0.62, {
+      fontSize: 11,
+      color: C.softInk,
+      align: 'center',
+      breakLine: true
+    })
+    if (index < boxes.length - 1) addLine(slide, x + 2.05, 2.99, 0.35, 0, C.muted, 1.3, 'triangle')
+  })
+  addRect(slide, 0.72, 4.46, 7.55, 1.42, C.white, C.line, true)
+  addText(slide, '协议隔离', 0.98, 4.72, 1.02, 0.3, { fontSize: 14, color: C.teal, bold: true })
+  addText(slide, '上游 CLI 与服务契约的变化只进入 Runtime Host；Renderer 始终面对稳定的本地事件模型。', 2.02, 4.65, 5.83, 0.46, {
+    fontSize: 16,
+    color: C.ink,
+    bold: true
+  })
+  addText(slide, '结果：运行时可替换、桌面流程连续、错误可清洗、测试边界清晰。', 0.98, 5.28, 6.85, 0.34, {
+    fontSize: 12,
+    color: C.muted
+  })
+  addRect(slide, 8.55, 4.46, 4.05, 1.42, C.slate, C.slate, true)
+  addText(slide, '轻量拓扑', 8.88, 4.72, 3.38, 0.3, { fontSize: 14, color: '8FD4CF', bold: true, align: 'center' })
+  addText(slide, '单进程主机 · 本机回环\n项目级状态 · 最短交付路径', 8.88, 5.08, 3.38, 0.58, {
+    fontSize: 17,
+    color: C.white,
+    bold: true,
+    align: 'center',
+    breakLine: true
+  })
+  addFooter(slide, 6, '实现证据：runtime host · preload IPC · streaming adapter')
+  addNotes(slide, 6, '轻量 Runtime Host 架构', '50 秒', [
+    '核心创新不是桌面框架本身，而是单一 Runtime Host 对协议、凭据、文件和生命周期的收敛。',
+    'Renderer 只消费稳定事件模型，因此上游变化不会扩散到整个界面。',
+    '项目级状态和本机回环服务共同缩短了任务到产物的执行路径。'
+  ])
+}
+
+// 07 BAI-Claw differentiation
+{
+  const slide = baseSlide(C.paper)
+  addHeader(slide, 7, '主要差异化：为项目交付重新选择架构目标函数', '架构差异化', C.coral, 'BAI WORK VS BAI-CLAW')
+  addText(slide, '比较的不是功能多少，而是架构是否匹配目标任务。', 1.1, 1.66, 11.1, 0.42, {
+    fontSize: 18,
+    color: C.softInk,
+    bold: true,
+    align: 'center'
+  })
+  addRect(slide, 0.72, 2.22, 5.72, 3.82, C.slateSoft, C.slateSoft, true)
+  addText(slide, 'BAI-Claw', 1.0, 2.5, 2.0, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.slate, bold: true })
+  addPill(slide, '通用个人 Agent', 4.38, 2.53, 1.62, C.slate, C.white, 10)
+  addBulletList(slide, [
+    '多 Agent、外部通信通道与定时任务并列编排',
+    '全局 Agent、Channel、Skill 与 Scheduler 状态',
+    '面向跨入口通信和持续自动化的广覆盖目标',
+    '在单项目交付场景中存在额外组件与状态域'
+  ], 1.0, 3.12, 4.95, 0.6, C.softInk, 13, C.slate)
+  addRect(slide, 6.88, 2.22, 5.72, 3.82, C.tealSoft, C.tealSoft, true)
+  addText(slide, 'BAI Work', 7.18, 2.5, 2.1, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.teal, bold: true })
+  addPill(slide, '项目级工作台', 10.5, 2.53, 1.62, C.teal, C.white, 10)
+  addBulletList(slide, [
+    'Workspace → Runtime Host → BAI Code 的短路径',
+    '状态、权限、产物与记忆围绕当前项目收敛',
+    '面向交互式工程与知识产物的闭环目标',
+    '更少网关跳数、更小故障域、更直接验收'
+  ], 7.18, 3.12, 4.95, 0.6, C.softInk, 13, C.teal)
+  addRect(slide, 1.25, 6.32, 10.83, 0.52, C.coralSoft, C.coralSoft, true)
+  addText(slide, '项目级任务中的架构优势：路径更短 → Failure Boundary 更少 → 进度更清晰 → 产物更快进入验收', 1.48, 6.4, 10.37, 0.32, {
+    fontSize: 13,
+    color: C.coral,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 7, '官方定位依据：docs.b.ai/baiclaw/introduction · 项目架构依据：BAI Work runtime host')
+  addNotes(slide, 7, '与 BAI-Claw 的架构差异', '60 秒', [
+    'BAI-Claw 官方定位强调多 Agent、多通道与 7×24 调度，适合广覆盖的个人智能体场景。',
+    'BAI Work 的目标函数不同：围绕当前项目、当前用户和可验收产物收敛状态。',
+    '因此我们主张的是项目级任务中的架构优势，不做脱离场景的绝对优劣判断。'
+  ])
+}
+
+// 08 Observability
+{
+  const slide = baseSlide()
+  addHeader(slide, 8, '可观测执行：把长任务转换为确定性状态机', '过程体验', C.teal, 'RUNTIME OBSERVABILITY')
   const flow = [
     ['输入', '目标与约束'],
-    ['事件', '流式 runtime 输出'],
+    ['事件', '流式运行时输出'],
     ['归一化', '去重 / 分类 / 清洗'],
     ['时间线', '步骤 / 工具 / 等待'],
-    ['结果', '摘要与产物'],
-    ['用量', '可得则展示，不臆造']
+    ['交付', '摘要 / 产物 / 验证'],
+    ['用量', '可得则展示']
   ]
-  flow.forEach(([title, body], index) => {
+  flow.forEach(function (item, index) {
     const x = 0.67 + index * 2.08
-    const fill = index === 2 || index === 3 ? C.tealSoft : C.white
-    addRect(slide, x, 2.02, 1.73, 1.2, fill, C.line, true)
-    addText(slide, title, x + 0.12, 2.23, 1.49, 0.32, { fontSize: 15, color: index === 2 || index === 3 ? C.teal : C.ink, bold: true, align: 'center' })
-    addText(slide, body, x + 0.12, 2.68, 1.49, 0.25, { fontSize: 9.7, color: C.muted, align: 'center' })
-    if (index < flow.length - 1) addLine(slide, x + 1.76, 2.61, 0.27, 0, C.muted, 1.2, 'triangle')
+    addRect(slide, x, 1.94, 1.73, 1.18, index === 2 || index === 3 ? C.tealSoft : C.white, C.line, true)
+    addText(slide, item[0], x + 0.12, 2.16, 1.49, 0.32, {
+      fontSize: 15,
+      color: index === 2 || index === 3 ? C.teal : C.ink,
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[1], x + 0.12, 2.6, 1.49, 0.26, { fontSize: 9.5, color: C.muted, align: 'center' })
+    if (index < flow.length - 1) addLine(slide, x + 1.76, 2.52, 0.27, 0, C.muted, 1.2, 'triangle')
   })
-  addText(slide, '原始输出', 0.75, 3.72, 1.25, 0.3, { fontSize: 13, color: C.red, bold: true })
-  addRect(slide, 0.72, 4.08, 5.7, 1.54, C.redSoft, C.redSoft, true)
-  addText(slide, 'bash(command=...)  read_file(...)  重复状态句\nRemoteProtocolError / incomplete chunked read\n长时间无反馈，最终整段堆积', 1.02, 4.34, 5.1, 1.02, {
-    fontFace: 'Aptos',
-    fontSize: 14,
+  addText(slide, '原始输出问题', 0.75, 3.62, 1.45, 0.3, { fontSize: 13, color: C.red, bold: true })
+  addRect(slide, 0.72, 3.98, 5.7, 1.58, C.redSoft, C.redSoft, true)
+  addText(slide, '工具语法与状态句混排\n连接错误堆栈污染聊天\n长时间无反馈，最终整段堆积', 1.02, 4.28, 5.1, 0.98, {
+    fontSize: 15,
     color: C.red,
     breakLine: true,
     valign: 'top'
   })
-  addText(slide, 'BAI Work 呈现', 6.92, 3.72, 1.55, 0.3, { fontSize: 13, color: C.green, bold: true })
-  addRect(slide, 6.9, 4.08, 5.7, 1.54, C.greenSoft, C.greenSoft, true)
-  addText(slide, '正在检查工作区  →  已运行 6 条命令\n连接中断：可重试，并保留有效上下文\n完成后只留下清晰结论、产物与验证', 7.2, 4.34, 5.1, 1.02, {
-    fontSize: 14,
+  addText(slide, 'BAI Work 呈现', 6.92, 3.62, 1.55, 0.3, { fontSize: 13, color: C.green, bold: true })
+  addRect(slide, 6.9, 3.98, 5.7, 1.58, C.greenSoft, C.greenSoft, true)
+  addText(slide, '正在检查工作区 → 已运行 6 条命令\n连接中断：可重试并保留有效上下文\n完成后只留下结论、产物与验证', 7.2, 4.28, 5.1, 0.98, {
+    fontSize: 14.5,
     color: C.green,
     bold: true,
     breakLine: true,
     valign: 'top'
   })
-  addRect(slide, 2.32, 6.03, 8.68, 0.55, C.slate, C.slate, true)
-  addText(slide, '价值：用户知道“现在在做什么、哪里卡住、最终交付了什么”', 2.55, 6.12, 8.22, 0.32, { fontSize: 16, color: C.white, bold: true, align: 'center' })
-  addFooter(slide, 6, '证据：runtime stream handling · progress timeline · failure sanitization tests')
-  addNotes(slide, 6, '可观测状态机', '50 秒', [
-    '这页直接回应产品迭代中最痛的体验：长时间无反馈、工具过程堆到最终回复、错误堆栈污染聊天。',
-    '说明 BAI Work 不是展示模型思维链，而是展示可验证的状态、工具动作和产物。',
-    '用量原则同样保守：runtime 没有 cache telemetry 就显示不可用，不把零当成真实命中率。'
+  addRect(slide, 2.22, 6.05, 8.88, 0.55, C.slate, C.slate, true)
+  addText(slide, '只展示可验证状态，不暴露模型内部推理；Telemetry 缺失时显示不可用，不伪造零值。', 2.46, 6.14, 8.4, 0.32, {
+    fontSize: 13.5,
+    color: C.white,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 8, '实现证据：stream normalization · progress timeline · failure sanitization tests')
+  addNotes(slide, 8, '可观测状态机', '45 秒', [
+    '事件流先去重、分类和清洗，再进入时间线和最终交付区。',
+    '过程区展示工具动作和可验证状态，不展示模型内部思维链。',
+    '错误与用量采用保守策略：不让堆栈污染界面，也不把缺失遥测当成零。'
   ])
 }
 
-// 07 AI depth
+// 09 Token Economy overview
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 7, 'AI 应用不是接口调用，而是完整 Agent 闭环', 'AI / Web3 应用', '20', C.amber, 'AI DEPTH')
-  addRect(slide, 0.72, 1.72, 7.3, 4.85, C.white, C.line, true)
-  const loop = [
-    ['上下文', 'Workspace · Git · 文件 · 记忆', 2.22, 2.08, C.blue],
-    ['规划', '拆解目标与约束', 5.35, 2.08, C.teal],
-    ['工具', 'Shell · 文件 · MCP · Skills', 5.35, 4.2, C.coral],
-    ['产物', '代码 · 文档 · 图表 · diff', 2.22, 4.2, C.green]
-  ]
-  loop.forEach(([title, body, x, y, accent]) => {
-    addRect(slide, x, y, 2.18, 1.0, C.bg, C.line, true)
-    addText(slide, title, x + 0.18, y + 0.16, 1.82, 0.32, { fontSize: 16, color: accent, bold: true, align: 'center' })
-    addText(slide, body, x + 0.12, y + 0.56, 1.94, 0.22, { fontSize: 9.5, color: C.muted, align: 'center' })
+  addHeader(slide, 9, 'Token Economy：用占用率门控替代无差别压缩', '上下文算法', C.amber, 'TOKEN ECONOMY')
+  addRect(slide, 0.72, 1.82, 4.35, 2.28, C.slate, C.slate, true)
+  addText(slide, '线性近似 Token 估计器', 1.02, 2.12, 3.75, 0.38, { fontSize: 16, color: 'F2BE73', bold: true, align: 'center' })
+  addText(slide, 'T̂ = floor(|C| / 3)', 1.02, 2.74, 3.75, 0.58, {
+    fontFace: 'Aptos Display',
+    fontSize: 28,
+    color: C.white,
+    bold: true,
+    align: 'center'
   })
-  addRect(slide, 3.78, 3.2, 2.06, 0.82, C.slate, C.slate, true)
-  addText(slide, 'BAI Code\nruntime', 3.96, 3.28, 1.7, 0.62, { fontFace: 'Aptos', fontSize: 18, color: C.white, bold: true, align: 'center', breakLine: true })
-  addLine(slide, 4.38, 3.08, 0, -0.5, C.amber, 2, 'triangle')
-  addLine(slide, 5.84, 3.61, 0.55, 0, C.amber, 2, 'triangle')
-  addLine(slide, 4.38, 4.02, 0, 0.45, C.amber, 2, 'triangle')
-  addLine(slide, 3.78, 3.61, -0.55, 0, C.amber, 2, 'triangle')
-  addText(slide, '验证通过后继续 / 失败则带上下文恢复', 2.35, 5.68, 5.7, 0.32, { fontSize: 12, color: C.softInk, bold: true, align: 'center' })
-  addText(slide, 'AI 深度的四个证据', 8.42, 1.9, 3.8, 0.38, { fontSize: 20, color: C.ink, bold: true })
+  addText(slide, 'ρ = T̂ / T_max', 1.02, 3.42, 3.75, 0.38, {
+    fontFace: 'Aptos',
+    fontSize: 18,
+    color: 'C8D1D8',
+    bold: true,
+    align: 'center'
+  })
+  addRect(slide, 5.42, 1.82, 7.18, 2.28, C.white, C.line, true)
+  addText(slide, 'Occupancy-Ratio Threshold Gating', 5.72, 2.12, 6.58, 0.38, {
+    fontFace: 'Aptos',
+    fontSize: 16,
+    color: C.amber,
+    bold: true
+  })
+  const gates = [
+    ['ρ > 0.50', '工具输出裁剪', C.teal],
+    ['ρ > 0.70', '语义摘要压缩', C.amber],
+    ['ρ > 0.90', '紧急上下文收敛', C.coral]
+  ]
+  gates.forEach(function (item, index) {
+    const x = 5.72 + index * 2.08
+    addPill(slide, item[0], x, 2.78, 1.68, item[2], C.white, 10)
+    addText(slide, item[1], x, 3.28, 1.68, 0.34, { fontSize: 12, color: C.ink, bold: true, align: 'center' })
+  })
+  addRect(slide, 0.72, 4.55, 11.88, 1.48, C.amberSoft, C.amberSoft, true)
+  addText(slide, '算法目标', 0.98, 4.84, 1.15, 0.32, { fontSize: 14, color: C.amber, bold: true })
   addBulletList(slide, [
-    '多轮、多步骤任务，而非单次问答',
-    '真实本地工具执行与文件变更',
-    '产物、验证和错误恢复进入同一循环',
-    '记忆与技能让能力跨任务复用'
-  ], 8.45, 2.52, 3.95, 0.68, C.softInk, 15)
-  addRect(slide, 8.42, 5.55, 4.0, 0.9, C.amberSoft, C.amberSoft, true)
-  addText(slide, '当前版本选择把 AI 做深，不用 Web3 贴标签。\n若未来接入链上能力，只用于插件签名与发布溯源。', 8.7, 5.7, 3.45, 0.58, { fontSize: 11.5, color: C.amber, bold: true, breakLine: true, align: 'center' })
-  addFooter(slide, 7, '当前已实现 AI Agent 闭环；Web3 仅作为有需求时的可验证基础设施选项')
-  addNotes(slide, 7, 'AI 应用深度', '55 秒', [
-    '围绕闭环讲 AI，不要只报模型名称。',
-    '强调工具执行、产物和验证是最难也最有价值的部分。',
-    '对 Web3 保持克制：评分标准允许 AI 或 Web3，当前项目用真实 AI 深度得分，不做概念包装。'
+    'O(n) 单次扫描估计上下文占用，避免每轮都触发高成本精确计数。',
+    '只在阈值越界时激活相应压缩层，低占用对话保持原始信息。',
+    '优先保留最新窗口、任务约束和可验证结果，降低重复历史回传。'
+  ], 2.15, 4.76, 9.85, 0.42, C.softInk, 12, C.amber)
+  addText(slide, '这不是“删得更多”，而是按上下文风险分级选择最小必要压缩。', 1.42, 6.4, 10.5, 0.38, {
+    fontSize: 16,
+    color: C.ink,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 9, '运行时算法证据：BAI Code context manager · 官方支持 automatic context compression')
+  addNotes(slide, 9, 'Token Economy 总体算法', '55 秒', [
+    '先用线性近似估计器得到上下文占用率，再通过三级阈值门控选择压缩策略。',
+    '这种设计避免低占用对话被过度压缩，同时在接近上限时快速收敛。',
+    '核心价值是减少重复上下文回传，并优先保护最近任务窗口与验收证据。'
   ])
 }
 
-// 08 Ecosystem
+// 10 Token Economy layers
 {
   const slide = baseSlide()
-  addHeader(slide, 8, '生态能力：把开源资产变成可控、可安装的生产力', '商业与生态潜力', '20', C.coral, 'OPEN ECOSYSTEM')
-  const lanes = [
-    ['EBAI', 'commands · agent commands · rules · hooks', '映射到 ~/.bai；hooks 默认关闭', C.blueSoft, C.blue],
-    ['Hermes-derived', '73 个可审阅 SKILL.md', '研究、开发、生产力、MLOps 等类别', C.tealSoft, C.teal],
-    ['Agent-Reach / MCP', '外部搜索与工具连接', '按需安装，不静默扩大权限', C.coralSoft, C.coral],
-    ['BAI Work Native', 'Guardrails · Token Efficiency · Speckit · Memory', '形成产品默认能力与安全口径', C.greenSoft, C.green]
+  addHeader(slide, 10, '三层压缩算法：从结构裁剪到语义收敛', '算法细节', C.amber, 'TOKEN REDUCTION PIPELINE')
+  const layers = [
+    {
+      label: 'L1',
+      title: 'Role-Aware Head–Tail Truncation',
+      condition: '工具消息 > 1,500 字符且 > 6 行',
+      action: '仅处理 tool role；保留首 3 行 + 尾 3 行，并插入省略行数。',
+      result: '先消除高冗余命令输出',
+      fill: C.tealSoft,
+      accent: C.teal
+    },
+    {
+      label: 'L2',
+      title: 'Recent-Window Semantic Compaction',
+      condition: 'ρ > 0.70 且消息数 > 10',
+      action: '旧消息进入语义摘要；最近 8 条消息保持原文，摘要失败时降级提取。',
+      result: '保护近期意图与执行连续性',
+      fill: C.amberSoft,
+      accent: C.amber
+    },
+    {
+      label: 'L3',
+      title: 'Emergency Hard Collapse',
+      condition: 'ρ > 0.90 且消息数 > 4',
+      action: '保留摘要与最近 4 条消息；极小列表保留最近 2 条。',
+      result: '在硬上限前恢复可生成空间',
+      fill: C.coralSoft,
+      accent: C.coral
+    }
   ]
-  lanes.forEach(([title, capabilities, note, fill, accent], index) => {
-    const y = 1.78 + index * 1.22
-    addRect(slide, 0.72, y, 11.88, 0.95, fill, fill, true)
-    addText(slide, title, 0.98, y + 0.18, 1.85, 0.34, { fontFace: 'Aptos', fontSize: 17, color: accent, bold: true })
-    addText(slide, capabilities, 3.02, y + 0.16, 4.35, 0.34, { fontSize: 15, color: C.ink, bold: true })
-    addText(slide, note, 7.52, y + 0.18, 4.72, 0.34, { fontSize: 12, color: C.softInk, align: 'right' })
+  layers.forEach(function (layer, index) {
+    const y = 1.78 + index * 1.52
+    addRect(slide, 0.72, y, 11.88, 1.2, layer.fill, layer.fill, true)
+    addPill(slide, layer.label, 0.98, y + 0.2, 0.62, layer.accent, C.white, 11)
+    addText(slide, layer.title, 1.82, y + 0.18, 3.6, 0.32, {
+      fontFace: 'Aptos',
+      fontSize: 15,
+      color: layer.accent,
+      bold: true
+    })
+    addText(slide, layer.condition, 1.82, y + 0.65, 3.6, 0.28, { fontSize: 11, color: C.softInk, bold: true })
+    addText(slide, layer.action, 5.68, y + 0.18, 4.1, 0.72, { fontSize: 12, color: C.softInk, valign: 'top' })
+    addText(slide, layer.result, 10.0, y + 0.25, 2.25, 0.5, {
+      fontSize: 12,
+      color: layer.accent,
+      bold: true,
+      align: 'center'
+    })
   })
-  addRect(slide, 0.72, 6.0, 11.88, 0.62, C.slate, C.slate, true)
-  addText(slide, '生态原则：能复用，但必须可追溯、可禁用、可限定作用域', 1.0, 6.1, 11.3, 0.35, { fontSize: 18, color: C.white, bold: true, align: 'center' })
-  addFooter(slide, 8, '仓库实测：resources/skills 下 78 个 SKILL.md，其中 73 个 Hermes-derived')
-  addNotes(slide, 8, '开源生态内化', '45 秒', [
-    '重点不是“集成了很多项目”，而是说明它们如何进入 BAI 目录、如何被用户发现、如何受权限约束。',
-    'EBAI 将 commands、agents、rules、hooks 映射为 BAI 可用形态；Hermes-derived skills 直接进入技能发现层。',
-    'Agent-Reach 和外部 MCP 保持按需安装，避免为了功能数量默认打开额外网络或执行能力。'
+  addRect(slide, 0.72, 6.42, 11.88, 0.4, C.slateSoft, C.slateSoft, true)
+  addText(slide, '运行时同时保留手动 compact 入口；自动策略负责守住上下文上限，用户仍可主动控制压缩时机。', 0.98, 6.48, 11.35, 0.24, {
+    fontSize: 11.5,
+    color: C.slate,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 10, '阈值与窗口大小来自当前 packaged BAI Code runtime；不宣称未经测量的节省比例')
+  addNotes(slide, 10, 'Token Economy 三层算法', '60 秒', [
+    '第一层只裁剪高冗余工具输出；第二层摘要旧历史并保留最近八条；第三层在硬上限前紧急收敛。',
+    '每层都保持任务最近窗口和可验证结果，避免把“降 Token”做成无差别删减。',
+    '我们不使用未经实测的百分比，而是展示可复现的阈值、窗口和回退路径。'
   ])
 }
 
-// 09 Safety
+// 11 EBAI mapping
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 9, '安全不是限制功能，而是定义可信执行边界', 'AI / Web3 应用', '20', C.amber, 'TRUST BOUNDARY')
-  addRect(slide, 0.72, 1.78, 3.0, 4.72, C.slate, C.slate, true)
-  addText(slide, '用户可信区', 1.04, 2.05, 2.35, 0.4, { fontSize: 21, color: C.white, bold: true, align: 'center' })
-  addText(slide, 'API key\n项目文件\n工作区选择\n审批与问题', 1.16, 2.78, 2.12, 2.1, { fontSize: 18, color: 'DDE4E9', breakLine: true, align: 'center', valign: 'top' })
-  addPill(slide, '本地保存', 1.55, 5.6, 1.35, C.green, C.white, 11)
-  addLine(slide, 3.92, 4.1, 0.75, 0, C.amber, 2, 'triangle')
-  addRect(slide, 4.72, 1.78, 3.02, 4.72, C.amberSoft, C.amberSoft, true)
-  addText(slide, 'BAI Work 边界', 5.02, 2.05, 2.42, 0.4, { fontSize: 21, color: C.amber, bold: true, align: 'center' })
+  addHeader(slide, 11, 'EBAI：把外部能力资产转译为 BAI 原生结构', '能力兼容层', C.coral, 'EBAI TECHNICAL PIPELINE')
+  const pipeline = [
+    ['Remote Index', '递归索引\n版本与来源记录', C.slateSoft, C.slate],
+    ['Safety Gate', '路径校验\n大小与数量上限', C.redSoft, C.red],
+    ['Staging Cache', '并发下载\n随机暂存目录', C.blueSoft, C.blue],
+    ['Atomic Swap', '完整后 rename\n避免半安装状态', C.tealSoft, C.teal],
+    ['Semantic Mapper', '命令 / Agent / Rule\nSkill / Hook 转译', C.amberSoft, C.amber],
+    ['BAI Home', '用户目录与\n项目作用域目标', C.greenSoft, C.green]
+  ]
+  pipeline.forEach(function (item, index) {
+    const x = 0.55 + index * 2.08
+    addRect(slide, x, 1.98, 1.7, 1.62, item[2], item[2], true)
+    addText(slide, item[0], x + 0.1, 2.22, 1.5, 0.34, {
+      fontFace: 'Aptos',
+      fontSize: 13,
+      color: item[3],
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[1], x + 0.12, 2.78, 1.46, 0.56, {
+      fontSize: 10.5,
+      color: C.softInk,
+      align: 'center',
+      breakLine: true
+    })
+    if (index < pipeline.length - 1) addLine(slide, x + 1.73, 2.8, 0.27, 0, C.muted, 1.1, 'triangle')
+  })
+  addRect(slide, 0.72, 4.15, 5.7, 1.7, C.white, C.line, true)
+  addText(slide, '资源约束', 0.98, 4.44, 1.0, 0.3, { fontSize: 14, color: C.coral, bold: true })
   addBulletList(slide, [
-    '127.0.0.1 默认绑定',
-    'Renderer 最小 IPC',
-    '凭据不回显',
-    '外部错误清洗',
-    '日志路径可定位'
-  ], 5.18, 2.76, 2.15, 0.58, C.softInk, 13)
-  addLine(slide, 7.95, 4.1, 0.75, 0, C.amber, 2, 'triangle')
-  addRect(slide, 8.74, 1.78, 3.86, 4.72, C.white, C.line, true)
-  addText(slide, '外部能力区', 9.08, 2.05, 3.18, 0.4, { fontSize: 21, color: C.coral, bold: true, align: 'center' })
-  addBulletList(slide, [
-    'EBAI hooks 安装后 disabled',
-    '启用必须指定 trusted workspace',
-    'workspace/.bai/hooks.toml 作用域',
-    '复制 rules 时拒绝 symlink',
-    'MCP / Agent-Reach 按需安装'
-  ], 9.16, 2.76, 3.0, 0.58, C.softInk, 13)
-  addRect(slide, 4.95, 5.75, 2.56, 0.46, C.amber, C.amber, true)
-  addText(slide, '默认安全，显式授权', 5.1, 5.82, 2.26, 0.27, { fontSize: 13, color: C.white, bold: true, align: 'center' })
-  addFooter(slide, 9, '证据：credential redaction · loopback service · trusted-workspace hooks tests')
-  addNotes(slide, 9, '安全与可信边界', '45 秒', [
-    '按三层边界讲：用户可信区、BAI Work 本地边界、外部能力区。',
-    '最关键的安全设计是 hooks 默认关闭，启用必须限定到受信任 workspace。',
-    '强调所有安全默认值都在代码和测试中，不是答辩时补写的承诺。'
+    '最多 3,000 文件 · 单文件 2 MiB · 总量 96 MiB',
+    '下载并发度 8；拒绝绝对路径、反斜杠与路径穿越',
+    '标记 source / ref / commit / file count，支持追溯'
+  ], 2.05, 4.36, 4.0, 0.43, C.softInk, 11.5, C.coral)
+  addRect(slide, 6.72, 4.15, 5.88, 1.7, C.slate, C.slate, true)
+  addText(slide, '安装目标', 7.02, 4.44, 1.0, 0.3, { fontSize: 14, color: '8FD4CF', bold: true })
+  addText(slide, '~/.bai/commands\n~/.bai/skills\n~/.bai/skills/ebai-rules\n~/.bai/ebai/hooks/hooks.toml', 8.3, 4.32, 3.92, 1.12, {
+    fontFace: 'Aptos',
+    fontSize: 13,
+    color: C.white,
+    breakLine: true,
+    valign: 'top'
+  })
+  addText(slide, 'EBAI 不是文本替换，而是带来源、冲突处理与安全约束的语义迁移。', 1.22, 6.34, 10.9, 0.42, {
+    fontSize: 16,
+    color: C.ink,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 11, '实现证据：EBAI source service · EBAI mapping service · mapping tests')
+  addNotes(slide, 11, 'EBAI 技术实现', '60 秒', [
+    'EBAI 从远程索引开始，经过安全门、暂存缓存、原子替换和语义映射后进入 BAI 用户目录。',
+    '资源限制、路径校验和来源标记保证安装过程可控、可追溯、不会留下半安装状态。',
+    '命令、Agent、规则、技能和 Hook 使用不同映射规则，不是简单文本替换。'
   ])
 }
 
-// 10 Engineering proof
+// 12 EBAI hooks safety
 {
   const slide = baseSlide()
-  addHeader(slide, 10, '工程证据：不是原型截图，而是已构建的软件', '产品完成度', '25', C.blue, 'DELIVERY EVIDENCE')
+  addHeader(slide, 12, 'EBAI Hooks：转换能力，但不自动扩大执行权限', '可信执行', C.amber, 'PROJECT-SCOPED HOOKS')
+  addRect(slide, 0.72, 1.78, 5.45, 4.72, C.white, C.line, true)
+  addText(slide, '事件语义转换', 1.0, 2.05, 2.2, 0.38, { fontSize: 19, color: C.amber, bold: true })
+  const mappings = [
+    ['PreToolUse', 'tool_call_before'],
+    ['PostToolUse', 'tool_call_after'],
+    ['SessionStart', 'session_start'],
+    ['SessionEnd', 'session_end'],
+    ['Stop', 'turn_end'],
+    ['UserPromptSubmit', 'message_submit']
+  ]
+  mappings.forEach(function (item, index) {
+    const y = 2.62 + index * 0.5
+    addText(slide, item[0], 1.02, y, 1.62, 0.28, { fontFace: 'Aptos', fontSize: 11, color: C.slate, bold: true })
+    addLine(slide, 2.72, y + 0.14, 0.52, 0, C.muted, 1, 'triangle')
+    addText(slide, item[1], 3.42, y, 2.16, 0.28, { fontFace: 'Aptos', fontSize: 11, color: C.teal, bold: true })
+  })
+  addRect(slide, 6.52, 1.78, 6.08, 4.72, C.slate, C.slate, true)
+  addText(slide, '默认安全策略', 6.86, 2.05, 2.3, 0.38, { fontSize: 19, color: 'F2BE73', bold: true })
+  addBulletList(slide, [
+    '全局 manifest 始终 enabled = false',
+    '启用必须显式选择受信任 workspace',
+    '只写入 <workspace>/.bai/hooks.toml',
+    '复制规则时拒绝符号链接与不安全路径',
+    '外部可执行脚本必须用户主动授权',
+    '支持 dry-run、force、overwrite 与 skip 摘要'
+  ], 6.9, 2.72, 5.15, 0.55, 'DDE4E9', 13, C.amber)
+  addPill(slide, '默认关闭', 7.02, 5.98, 1.35, C.red, C.white, 11)
+  addPill(slide, '项目作用域', 8.63, 5.98, 1.48, C.teal, C.white, 11)
+  addPill(slide, '显式信任', 10.37, 5.98, 1.35, C.green, C.white, 11)
+  addFooter(slide, 12, '安全原则：安装不等于执行；能力转译不等于隐式信任')
+  addNotes(slide, 12, 'EBAI Hook 安全', '50 秒', [
+    'Hook 转换为 BAI 项目级 TOML，但全局 manifest 默认始终关闭。',
+    '只有用户明确选择受信任工作区后，才会写入项目级 hooks.toml。',
+    '这种设计把高价值自动化能力与执行信任分开，避免安装即执行。'
+  ])
+}
+
+// 13 Agent loop
+{
+  const slide = baseSlide(C.paper)
+  addHeader(slide, 13, 'AI 深度：上下文、工具、产物与验证构成闭环', 'Agent 系统', C.blue, 'AGENT EXECUTION LOOP')
+  addRect(slide, 0.72, 1.75, 7.38, 4.88, C.white, C.line, true)
+  const nodes = [
+    ['上下文', 'Workspace · 文件 · 版本 · 记忆', 1.35, 2.18, C.blue],
+    ['规划', '目标拆解与约束解析', 4.95, 2.18, C.teal],
+    ['工具', '命令 · 文件 · 检索 · 技能', 4.95, 4.38, C.coral],
+    ['产物', '代码 · 文档 · 图表 · 差异', 1.35, 4.38, C.green]
+  ]
+  nodes.forEach(function (item) {
+    addRect(slide, item[2], item[3], 2.55, 1.02, C.bg, item[4], true)
+    addText(slide, item[0], item[2] + 0.18, item[3] + 0.16, 0.72, 0.32, {
+      fontSize: 16,
+      color: item[4],
+      bold: true
+    })
+    addText(slide, item[1], item[2] + 0.18, item[3] + 0.57, 2.2, 0.25, { fontSize: 10, color: C.muted })
+  })
+  addLine(slide, 3.94, 2.7, 0.92, 0, C.muted, 1.5, 'triangle')
+  addLine(slide, 6.22, 3.24, 0, 1.02, C.muted, 1.5, 'triangle')
+  addLine(slide, 4.87, 4.9, -0.92, 0, C.muted, 1.5, 'triangle')
+  addLine(slide, 2.62, 4.3, 0, -0.98, C.muted, 1.5, 'triangle')
+  addRect(slide, 2.62, 3.44, 4.18, 0.7, C.slate, C.slate, true)
+  addText(slide, '验证门：结果一致性 · 文件存在性 · 测试与运行证据', 2.86, 3.56, 3.7, 0.42, {
+    fontSize: 13,
+    color: C.white,
+    bold: true,
+    align: 'center'
+  })
+  addRect(slide, 8.45, 1.75, 4.15, 4.88, C.slate, C.slate, true)
+  addText(slide, '系统级 AI 应用', 8.78, 2.1, 3.48, 0.38, { fontSize: 19, color: '8FD4CF', bold: true, align: 'center' })
+  addBulletList(slide, [
+    '多轮上下文与自动压缩',
+    '基于事件流的工具执行',
+    '项目级权限与工作区边界',
+    '产物生成后的验证与摘要',
+    '长期记忆与能力复用',
+    '可选的签名与发布溯源方向'
+  ], 8.9, 2.8, 3.05, 0.55, 'DDE4E9', 13, C.teal)
+  addFooter(slide, 13, 'AI 的价值通过任务闭环证明；生态溯源作为未来方向，不包装为当前能力')
+  addNotes(slide, 13, 'Agent 执行闭环', '45 秒', [
+    'BAI Work 的 AI 应用不是单次接口调用，而是上下文、规划、工具、产物和验证的闭环。',
+    '验证门将“模型说完成了”转换为文件、差异、测试与运行证据。',
+    '可选的签名和发布溯源是后续生态方向，不作为当前完成度陈述。'
+  ])
+}
+
+// 14 Competitive matrix
+{
+  const slide = baseSlide()
+  addHeader(slide, 14, '竞争定位：BAI Work 连接模型能力与项目交付', '竞争优势', C.coral, 'POSITIONING MATRIX')
+  const cols = [
+    ['比较维度', 0.72, 2.22, C.slate],
+    ['BAI Work', 2.94, 3.2, C.teal],
+    ['BAI-Claw', 6.2, 3.0, C.coral],
+    ['BAI Code', 9.24, 3.36, C.blue]
+  ]
+  cols.forEach(function (item) {
+    addRect(slide, item[1], 1.82, item[2], 0.54, item[3], item[3], true)
+    addText(slide, item[0], item[1] + 0.1, 1.92, item[2] - 0.2, 0.32, {
+      fontSize: 13,
+      color: C.white,
+      bold: true,
+      align: 'center'
+    })
+  })
+  const rows = [
+    ['核心定位', '项目级桌面工作台', '通用个人 Agent', '命令行执行引擎'],
+    ['状态作用域', 'Workspace / Project', 'Agent / Channel / Global', 'Session / Process'],
+    ['主路径', '任务 → 进度 → 产物 → 验证', '消息 → 编排 → 自动化', '指令 → 工具 → 输出'],
+    ['架构重点', '短链路与最小故障域', '广覆盖与持续运行', '执行能力与上下文'],
+    ['交付形态', '文件、差异、测试、摘要', '会话与自动化结果', '终端输出与会话'],
+    ['产品关系', '面向最终用户的交付层', '主要差异化对象', 'BAI Work 底层能力']
+  ]
+  rows.forEach(function (row, index) {
+    const y = 2.52 + index * 0.64
+    const fill = index % 2 === 0 ? C.white : C.bg
+    addRect(slide, 0.72, y, 11.88, 0.58, fill, C.line)
+    addText(slide, row[0], 0.9, y + 0.1, 1.86, 0.32, { fontSize: 11.5, color: C.slate, bold: true })
+    addText(slide, row[1], 3.08, y + 0.1, 2.88, 0.32, { fontSize: 11.5, color: C.teal, bold: true, align: 'center' })
+    addText(slide, row[2], 6.38, y + 0.1, 2.62, 0.32, { fontSize: 11.5, color: C.coral, align: 'center' })
+    addText(slide, row[3], 9.42, y + 0.1, 2.98, 0.32, { fontSize: 11.5, color: C.blue, align: 'center' })
+  })
+  addRect(slide, 1.1, 6.52, 11.12, 0.38, C.coralSoft, C.coralSoft, true)
+  addText(slide, '结论：BAI-Claw 是主要差异化对象；BAI Code 是被 BAI Work 产品化、可视化和工程化的底层执行能力。', 1.32, 6.57, 10.68, 0.26, {
+    fontSize: 11.5,
+    color: C.coral,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 14, '定位依据：BAI 官方产品文档 · BAI Work 当前实现')
+  addNotes(slide, 14, '竞争定位矩阵', '55 秒', [
+    'BAI-Claw 是主要差异化对象，因为它同样面向最终用户，但目标是通用个人 Agent。',
+    'BAI Work 用项目级状态、短执行链和产物验收建立差异化。',
+    'BAI Code 不作为主要竞品，它是 BAI Work 封装并增强的底层执行引擎。'
+  ])
+}
+
+// 15 Engineering proof
+{
+  const slide = baseSlide(C.paper)
+  addHeader(slide, 15, '工程证据：不是原型截图，而是可构建的软件', '交付验证', C.blue, 'ENGINEERING PROOF')
   const metrics = [
     ['3', '桌面平台', 'Mac Intel / Apple Silicon / Windows', C.blue],
-    ['168', '测试文件', '覆盖 main、runtime、renderer、服务', C.teal],
-    ['1,144', '自动化测试', '本轮完整测试全部通过', C.green],
-    ['0.9.1', 'BAI Code runtime', 'Mac Intel packaged smoke healthy', C.coral]
+    ['168', '测试文件', '覆盖 main、runtime、renderer 与服务', C.teal],
+    ['1,144', '自动化测试', '完整测试基线', C.green],
+    ['0.9.1', 'BAI Code', 'Mac Intel packaged runtime', C.coral]
   ]
-  metrics.forEach(([value, label, note, accent], index) => {
+  metrics.forEach(function (item, index) {
     const x = 0.72 + index * 3.0
-    addRect(slide, x, 1.82, 2.68, 1.7, C.white, C.line, true)
-    addText(slide, value, x + 0.22, 2.05, 2.24, 0.58, { fontFace: 'Aptos Display', fontSize: 32, color: accent, bold: true, align: 'center' })
-    addText(slide, label, x + 0.22, 2.69, 2.24, 0.3, { fontSize: 13.5, color: C.ink, bold: true, align: 'center' })
-    addText(slide, note, x + 0.25, 3.03, 2.18, 0.3, { fontSize: 8.8, color: C.muted, align: 'center' })
+    addRect(slide, x, 1.82, 2.68, 1.68, C.white, C.line, true)
+    addMetric(slide, item[0], item[1], x + 0.22, 2.04, 2.24, item[3], item[2])
   })
   const platforms = [
-    ['macOS Intel x64', '自包含 CPython 3.11 + BAI Code runtime', '已在本机重新构建并运行'],
-    ['macOS arm64', '官方 BAI Code wheelhouse + user-local venv', '原生 CI 构建与 smoke'],
-    ['Windows x64', '官方 win_amd64 wheelhouse + NSIS', '原生 CI 构建与 smoke']
+    ['macOS Intel x64', '自包含 Python 3.11 + BAI Code runtime', '本机构建与运行'],
+    ['macOS arm64', '官方运行时 wheelhouse + 用户目录环境', '原生构建与 smoke'],
+    ['Windows x64', '官方 win_amd64 wheelhouse + 安装包', '原生构建与 smoke']
   ]
-  platforms.forEach(([name, packageText, result], index) => {
+  platforms.forEach(function (item, index) {
     const y = 4.02 + index * 0.76
     addRect(slide, 0.72, y, 2.55, 0.56, index === 0 ? C.blue : C.slate, index === 0 ? C.blue : C.slate, true)
-    addText(slide, name, 0.9, y + 0.09, 2.18, 0.3, { fontFace: 'Aptos', fontSize: 13, color: C.white, bold: true, align: 'center' })
-    addText(slide, packageText, 3.55, y + 0.06, 5.5, 0.36, { fontSize: 12.5, color: C.softInk })
-    addPill(slide, result, 9.38, y + 0.1, 2.9, index === 0 ? C.blueSoft : C.greenSoft, index === 0 ? C.blue : C.green, 10)
+    addText(slide, item[0], 0.9, y + 0.09, 2.18, 0.3, {
+      fontFace: 'Aptos',
+      fontSize: 13,
+      color: C.white,
+      bold: true,
+      align: 'center'
+    })
+    addText(slide, item[1], 3.55, y + 0.06, 5.5, 0.36, { fontSize: 12.5, color: C.softInk })
+    addPill(slide, item[2], 9.38, y + 0.1, 2.9, index === 0 ? C.blueSoft : C.greenSoft, index === 0 ? C.blue : C.green, 10)
   })
   addRect(slide, 0.72, 6.44, 11.88, 0.42, C.slateSoft, C.slateSoft, true)
-  addText(slide, '验证链：typecheck → lint → unit tests → production build → electron-builder → packaged runtime smoke', 0.98, 6.5, 11.35, 0.26, { fontFace: 'Aptos', fontSize: 11.5, color: C.slate, bold: true, align: 'center' })
-  addFooter(slide, 10, '当前事实：Mac Intel binary 为 Mach-O 64-bit x86_64；CFBundleDisplayName = BAI Work')
-  addNotes(slide, 10, '工程验证证据', '45 秒', [
-    '先给四个大数字，再讲三平台分发策略。',
-    'Mac Intel 是当前最稳定版本，自包含 runtime；arm64 和 Windows 使用官方 wheelhouse，在用户目录创建 venv。',
-    '不要把 CI 通过等同于全部商业发布：当前 macOS 公证和 Windows 代码签名仍需正式凭据。'
+  addText(slide, '验证链：typecheck → lint → unit tests → production build → desktop package → packaged runtime smoke', 0.98, 6.5, 11.35, 0.26, {
+    fontFace: 'Aptos',
+    fontSize: 11.5,
+    color: C.slate,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 15, '当前主版本：Mac Intel x86_64；其余平台保持同源实现与原生验证')
+  addNotes(slide, 15, '工程验证证据', '40 秒', [
+    '四个数字证明项目已有真实工程规模和自动化验证。',
+    'Mac Intel 是当前迭代主版本，其他平台保持同源构建和原生 smoke。',
+    '商业发布仍需正式签名和公证凭据，这一风险在路线图中明确。'
   ])
 }
 
-// 11 Users
+// 16 Users
 {
-  const slide = baseSlide(C.paper)
-  addHeader(slide, 11, '真实需求：先服务高频、长链路的知识工作者', '商业与生态潜力', '20', C.coral, 'TARGET USERS')
+  const slide = baseSlide()
+  addHeader(slide, 16, '目标用户：先占领高频、长链路的项目工作', '市场切入', C.coral, 'TARGET USERS')
   const users = [
-    ['个人开发者 / 研究者', '本地项目任务长、文件多、需要持续上下文', '从问题到代码 / 文档 / 图表的一站式交付', C.blueSoft, C.blue],
-    ['小型研发团队', '重复流程难复用，Agent 行为和权限难统一', '共享 skills、规则、Provider 与审阅口径', C.tealSoft, C.teal],
-    ['BAI 生态开发者', 'CLI 能力缺少桌面入口、分发和用户反馈面', '把 runtime、模型和生态能力带到日常工作流', C.coralSoft, C.coral]
+    ['个人开发者 / 研究者', '本地项目任务长、文件多、上下文重复传递。', '从问题到代码、文档和图表的一站式交付。', C.blueSoft, C.blue],
+    ['小型研发团队', '流程难复用，Agent 行为和权限口径难统一。', '共享技能、规则、服务配置与审阅标准。', C.tealSoft, C.teal],
+    ['BAI 生态用户', '底层执行能力缺少持续桌面入口与产物工作面。', '模型、运行时与生态能力进入日常项目流程。', C.coralSoft, C.coral]
   ]
-  users.forEach(([name, pain, value, fill, accent], index) => {
+  users.forEach(function (item, index) {
     const x = 0.72 + index * 4.03
-    addRect(slide, x, 1.85, 3.68, 3.9, fill, fill, true)
-    addText(slide, `0${index + 1}`, x + 0.24, 2.08, 0.5, 0.34, { fontFace: 'Aptos', fontSize: 13, color: accent, bold: true })
-    addText(slide, name, x + 0.24, 2.5, 3.15, 0.58, { fontSize: 20, color: C.ink, bold: true, valign: 'top' })
-    addText(slide, '核心痛点', x + 0.24, 3.34, 1.1, 0.28, { fontSize: 11, color: accent, bold: true })
-    addText(slide, pain, x + 0.24, 3.69, 3.14, 0.72, { fontSize: 13.5, color: C.softInk, valign: 'top' })
-    addText(slide, 'BAI Work 价值', x + 0.24, 4.65, 1.4, 0.28, { fontSize: 11, color: accent, bold: true })
-    addText(slide, value, x + 0.24, 5.0, 3.14, 0.55, { fontSize: 13.5, color: C.ink, bold: true, valign: 'top' })
+    addRect(slide, x, 1.85, 3.68, 3.92, item[3], item[3], true)
+    addText(slide, '0' + (index + 1), x + 0.24, 2.08, 0.5, 0.34, {
+      fontFace: 'Aptos',
+      fontSize: 13,
+      color: item[4],
+      bold: true
+    })
+    addText(slide, item[0], x + 0.24, 2.48, 3.15, 0.58, {
+      fontSize: 20,
+      color: C.ink,
+      bold: true,
+      valign: 'top'
+    })
+    addText(slide, '核心摩擦', x + 0.24, 3.32, 1.1, 0.28, { fontSize: 11, color: item[4], bold: true })
+    addText(slide, item[1], x + 0.24, 3.68, 3.14, 0.68, { fontSize: 13.5, color: C.softInk, valign: 'top' })
+    addText(slide, 'BAI Work 价值', x + 0.24, 4.62, 1.4, 0.28, { fontSize: 11, color: item[4], bold: true })
+    addText(slide, item[2], x + 0.24, 4.98, 3.14, 0.55, { fontSize: 13.5, color: C.ink, bold: true, valign: 'top' })
   })
-  addText(slide, '首批验证不追求“所有 AI 用户”，而聚焦已有本地项目、愿意把任务交给 Agent 的用户。', 1.12, 6.22, 11.1, 0.44, { fontSize: 16, color: C.coral, bold: true, align: 'center' })
-  addFooter(slide, 11, '商业判断基于 Jobs-to-be-done；不使用未经验证的市场规模数字')
-  addNotes(slide, 11, '目标用户与真实需求', '50 秒', [
-    '用三类用户说明需求，但明确首批验证范围是个人开发者和小型研发团队。',
-    '需求判断来自产品实际使用场景：代码、调试、文档、研究和自动化，不编造用户量或收入。',
-    'BAI 生态协同点是桌面分发、API 使用和真实工作流反馈。'
+  addText(slide, '首批验证不追求覆盖所有 AI 用户，而聚焦已有本地项目、愿意把完整任务交给 Agent 的用户。', 1.0, 6.24, 11.3, 0.42, {
+    fontSize: 15.5,
+    color: C.coral,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 16, '市场判断基于 Jobs-to-be-Done；不使用未经验证的市场规模数字')
+  addNotes(slide, 16, '目标用户', '35 秒', [
+    '首批用户是有真实本地项目、长任务和产物验收需求的个人与小团队。',
+    'BAI 生态用户获得的是持续桌面入口和项目交付工作面。',
+    '切入策略先验证高频留存与任务完成率，再扩展更广泛场景。'
   ])
 }
 
-// 12 Business model
-{
-  const slide = baseSlide()
-  addHeader(slide, 12, '商业化：从个人工作台到团队 Agent 基础设施', '商业与生态潜力', '20', C.coral, 'BUSINESS MODEL')
-  const tiers = [
-    ['Open Source', '获客入口', ['本地工作台', '基础 runtime 与 skills', '社区贡献与透明安全'], C.slateSoft, C.slate],
-    ['Pro', '个人增值', ['多设备同步与备份', '高级自动化 / 更强模型', '云端任务与长期历史'], C.blueSoft, C.blue],
-    ['Team', '团队协作', ['共享 skills 与策略', '审计、配额与权限', '组织 Provider / SSO'], C.tealSoft, C.teal],
-    ['Ecosystem', '平台收入', ['精选能力市场', 'Provider 联合分发', '企业集成与服务'], C.coralSoft, C.coral]
-  ]
-  tiers.forEach(([name, stage, items, fill, accent], index) => {
-    const x = 0.68 + index * 3.1
-    const h = 3.62 + index * 0.26
-    const y = 5.9 - h
-    addRect(slide, x, y, 2.82, h, fill, fill, true)
-    addPill(slide, stage, x + 0.2, y + 0.2, 0.96, accent, C.white, 9.5)
-    addText(slide, name, x + 0.2, y + 0.72, 2.42, 0.48, { fontFace: 'Aptos Display', fontSize: 21, color: accent, bold: true })
-    addBulletList(slide, items, x + 0.26, y + 1.42, 2.28, 0.61, C.softInk, 11.5)
-  })
-  addRect(slide, 0.72, 6.2, 11.88, 0.5, C.coralSoft, C.coralSoft, true)
-  addText(slide, '当前状态：开源核心已落地；Pro / Team / Ecosystem 为待试点验证的商业假设。', 0.98, 6.28, 11.35, 0.3, { fontSize: 13, color: C.coral, bold: true, align: 'center' })
-  addFooter(slide, 12, '商业化顺序：先证明高频留存与任务完成率，再扩展团队和市场能力')
-  addNotes(slide, 12, '商业模式', '45 秒', [
-    '明确区分已实现与商业假设，避免把路线图说成收入事实。',
-    '开源核心降低采用门槛；个人 Pro 解决同步和高级自动化；Team 解决策略与审计。',
-    '生态收入必须建立在能力质量、签名、审核和真实交易需求之上。'
-  ])
-}
-
-// 13 Flywheel
+// 17 Go-to-market
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 13, '生态飞轮：每次任务都能沉淀为下一次的能力', '商业与生态潜力', '20', C.coral, 'ECOSYSTEM FLYWHEEL')
-  const nodes = [
-    ['使用', '真实项目产生需求', 1.0, 2.65, C.blue],
-    ['沉淀', '命令 / skill / 规则 / 记忆', 3.78, 1.78, C.teal],
-    ['治理', '审阅 / 禁用 / 权限 / 签名', 7.0, 1.78, C.amber],
-    ['复用', '个人与团队工作流', 9.78, 2.65, C.green],
-    ['反馈', '模型、runtime 与产品改进', 7.0, 4.25, C.coral],
-    ['增长', '更多用户与生态贡献', 3.78, 4.25, C.slate]
+  addHeader(slide, 17, '商业推广：受控补贴驱动首批高质量激活', '商业增长', C.green, 'CONTROLLED SUBSIDY ACQUISITION')
+  addPill(slide, '建议实验方案', 0.72, 1.72, 1.36, C.greenSoft, C.green, 10)
+  const offer = [
+    ['限量 Cohort', '首批限量名额\n按批次开放', C.blue],
+    ['半价折扣', '模型使用费用\n提供 50% 优惠', C.green],
+    ['额度封顶', '单账户月度上限\n控制补贴敞口', C.amber],
+    ['限时验证', '持续 8–12 周\n到期自动复核', C.coral]
   ]
-  nodes.forEach(([title, body, x, y, accent], index) => {
-    addRect(slide, x, y, 2.55, 1.1, C.white, accent, true)
-    addText(slide, title, x + 0.18, y + 0.16, 0.78, 0.34, { fontSize: 16, color: accent, bold: true })
-    addText(slide, body, x + 0.18, y + 0.56, 2.18, 0.28, { fontSize: 10.5, color: C.muted })
-    const next = nodes[(index + 1) % nodes.length]
-    const x1 = x + (next[2] > x ? 2.55 : next[2] < x ? 0 : 1.28)
-    const y1 = y + 0.55
-    const x2 = next[2] + (next[2] > x ? 0 : next[2] < x ? 2.55 : 1.28)
-    const y2 = next[3] + 0.55
-    addLine(slide, x1, y1, x2 - x1, y2 - y1, C.line, 1.3, 'triangle')
+  offer.forEach(function (item, index) {
+    const x = 0.72 + index * 3.02
+    addRect(slide, x, 2.22, 2.7, 1.58, C.white, item[2], true)
+    addText(slide, item[0], x + 0.2, 2.46, 2.3, 0.34, { fontSize: 17, color: item[2], bold: true, align: 'center' })
+    addText(slide, item[1], x + 0.2, 2.96, 2.3, 0.56, {
+      fontSize: 12.5,
+      color: C.softInk,
+      align: 'center',
+      breakLine: true
+    })
   })
-  addRect(slide, 5.19, 3.02, 2.95, 1.12, C.slate, C.slate, true)
-  addText(slide, 'BAI Work\n生态工作面', 5.45, 3.16, 2.43, 0.78, { fontSize: 21, color: C.white, bold: true, align: 'center', breakLine: true })
-  addRect(slide, 0.86, 6.08, 11.62, 0.62, C.tealSoft, C.tealSoft, true)
-  addText(slide, '与 BAI 的协同：桌面分发扩大 runtime 使用 → API 与模型进入真实任务 → 用户反馈反哺协议和产品。', 1.08, 6.18, 11.18, 0.36, { fontSize: 14, color: C.teal, bold: true, align: 'center' })
-  addFooter(slide, 13, '可选 Web3 方向仅限可验证插件签名与发布溯源，不作为当前功能陈述')
-  addNotes(slide, 13, '生态飞轮', '40 秒', [
-    '从真实项目开始，而不是从空市场开始：使用产生需求，需求沉淀为能力，治理后才能复用。',
-    'BAI Work 的价值是提供统一工作面和安全边界，让开源资产可进入日常生产。',
-    '如未来使用 Web3，优先解决插件来源与版本溯源，不发无实际效用的资产。'
+  addRect(slide, 0.72, 4.25, 7.2, 1.65, C.greenSoft, C.greenSoft, true)
+  addText(slide, 'Activation-Gated Subsidy', 0.98, 4.52, 2.55, 0.34, {
+    fontFace: 'Aptos',
+    fontSize: 15,
+    color: C.green,
+    bold: true
+  })
+  addBulletList(slide, [
+    '绑定有效 API Key 并完成首个项目任务后激活优惠。',
+    '按账户、设备与异常使用信号控制重复领取。',
+    '补贴只覆盖真实使用量，未使用额度不沉淀、不转售。'
+  ], 3.55, 4.42, 3.95, 0.43, C.softInk, 11.5, C.green)
+  addRect(slide, 8.25, 4.25, 4.35, 1.65, C.slate, C.slate, true)
+  addText(slide, '单位经济门槛', 8.58, 4.52, 3.7, 0.34, { fontSize: 15, color: '8FD4CF', bold: true, align: 'center' })
+  addText(slide, 'Subsidy CAC ≤ Cohort LTV ×\n目标回收系数', 8.58, 5.0, 3.7, 0.6, {
+    fontFace: 'Aptos',
+    fontSize: 17,
+    color: C.white,
+    bold: true,
+    align: 'center',
+    breakLine: true
+  })
+  const metrics = ['API Key 绑定率', '首任务完成率', 'D7 活跃项目', '付费转化率', '补贴效率']
+  metrics.forEach(function (metric, index) {
+    addPill(slide, metric, 0.82 + index * 2.45, 6.35, 2.12, index % 2 ? C.greenSoft : C.blueSoft, index % 2 ? C.green : C.blue, 9.5)
+  })
+  addFooter(slide, 17, '商业方案为待验证实验；额度、周期和风控阈值需按 Cohort 数据迭代')
+  addNotes(slide, 17, '首批商业推广', '50 秒', [
+    '建议采用限量、半价、封顶、限时的受控补贴方案，而不是无上限降价。',
+    '优惠在用户绑定有效 API Key 并完成首个项目任务后激活，确保补贴对应真实使用。',
+    '用首任务完成率、七日活跃项目和付费转化率决定是否扩大 Cohort。'
   ])
 }
 
-// 14 Roadmap
+// 18 Roadmap and demo
 {
   const slide = baseSlide()
-  addHeader(slide, 14, '12 周路线图：从可发布到可规模化', '商业与生态潜力', '20', C.coral, 'ROADMAP & METRICS')
+  addHeader(slide, 18, '12 周推进：先稳定发布，再验证增长', '执行计划', C.teal, 'ROADMAP & LIVE DEMO')
   const phases = [
-    ['NOW', 'v0.1.1', '三平台产物\nMac Intel 可运行\n技能生态与安全边界', 0.72, C.slate, C.slateSoft],
-    ['W1—4', '发布级', '对齐 official service contract\nDeveloper ID / notarization\nWindows code signing', 3.76, C.blue, C.blueSoft],
-    ['W5—8', '试点级', '3—5 个真实团队\n首轮 onboarding 与遥测\n插件审阅流程', 6.8, C.teal, C.tealSoft],
-    ['W9—12', '团队级', '共享 skills / policy\n审计与权限\n生态闭环小规模验证', 9.84, C.coral, C.coralSoft]
+    ['NOW', '稳定基线', 'Mac Intel 主版本\nToken Economy / EBAI\n当前自动化验证', C.slate, C.slateSoft],
+    ['W1–4', '发布级', '正式签名与公证\n运行时契约对齐\n崩溃与恢复遥测', C.blue, C.blueSoft],
+    ['W5–8', '试点级', '首批限量 Cohort\n30 秒上手漏斗\n真实任务回归', C.teal, C.tealSoft],
+    ['W9–12', '规模化判断', '留存与单位经济\n团队策略复用\n生态能力审核', C.coral, C.coralSoft]
   ]
-  phases.forEach(([time, title, body, x, accent, fill], index) => {
-    addRect(slide, x, 1.88, 2.72, 3.28, fill, fill, true)
-    addPill(slide, time, x + 0.22, 2.12, 0.92, accent, C.white, 10)
-    addText(slide, title, x + 0.22, 2.72, 2.26, 0.46, { fontSize: 21, color: accent, bold: true })
-    addText(slide, body, x + 0.22, 3.4, 2.26, 1.28, { fontSize: 13, color: C.softInk, breakLine: true, valign: 'top' })
-    if (index < phases.length - 1) addLine(slide, x + 2.75, 3.48, 0.24, 0, C.muted, 1.2, 'triangle')
+  phases.forEach(function (item, index) {
+    const x = 0.72 + index * 3.02
+    addRect(slide, x, 1.82, 2.72, 2.72, item[4], item[4], true)
+    addPill(slide, item[0], x + 0.22, 2.05, 0.92, item[3], C.white, 10)
+    addText(slide, item[1], x + 0.22, 2.62, 2.28, 0.42, { fontSize: 19, color: item[3], bold: true })
+    addText(slide, item[2], x + 0.22, 3.22, 2.28, 0.98, {
+      fontSize: 12.5,
+      color: C.softInk,
+      breakLine: true,
+      valign: 'top'
+    })
+    if (index < phases.length - 1) addLine(slide, x + 2.75, 3.16, 0.24, 0, C.muted, 1.2, 'triangle')
   })
-  addText(slide, '验证指标', 0.8, 5.63, 1.0, 0.3, { fontSize: 13, color: C.coral, bold: true })
-  const kpis = ['首次任务完成率', '首个产物耗时', '错误恢复率', '周活跃项目', '团队 skill 复用率']
-  kpis.forEach((kpi, index) => addPill(slide, kpi, 1.75 + index * 2.12, 5.58, 1.88, index % 2 ? C.tealSoft : C.coralSoft, index % 2 ? C.teal : C.coral, 10))
-  addText(slide, '原则：每个阶段都以行为指标验收，不以“新增多少功能”验收。', 1.32, 6.43, 10.7, 0.38, { fontSize: 16, color: C.ink, bold: true, align: 'center' })
-  addFooter(slide, 14, '下一关键里程碑：官方桌面 service contract 对齐 + 可信签名发布')
-  addNotes(slide, 14, '12 周路线图', '45 秒', [
-    '先说明当前起点，再分发布级、试点级、团队级三个阶段。',
-    '第一优先级不是继续堆功能，而是 official service contract、签名、公证和真实团队回归。',
-    '用任务完成率、首个产物耗时和错误恢复率衡量产品价值。'
-  ])
-}
-
-// 15 Demo playbook
-{
-  const slide = baseSlide(C.paper)
-  addHeader(slide, 15, '答辩现场：3 分钟证明产品价值', '展示表达能力', '15', C.green, 'LIVE DEMO PLAYBOOK')
+  addText(slide, '3 分钟现场证明', 0.82, 5.06, 1.5, 0.32, { fontSize: 14, color: C.teal, bold: true })
   const demo = [
-    ['00:00—00:30', '打开项目', '展示最新 B.AI Work 首页、workspace 与模型配置', C.blue],
-    ['00:30—01:30', '发送任务', '一句指令触发计划、工具步骤和实时状态', C.teal],
-    ['01:30—02:30', '审阅交付', '打开生成文件 / diff / 文档，说明验证结果', C.coral],
-    ['02:30—03:00', '证明边界', '展示 EBAI hooks 默认关闭与三平台 release', C.green]
+    ['00:00–00:30', '输入 API Key，拉取模型'],
+    ['00:30–01:30', '发送项目任务，展示实时步骤'],
+    ['01:30–02:30', '打开产物、差异和验证结果'],
+    ['02:30–03:00', '展示 EBAI 安全边界与构建证据']
   ]
-  demo.forEach(([time, title, body, accent], index) => {
-    const y = 1.85 + index * 1.05
-    addText(slide, time, 0.78, y + 0.16, 1.52, 0.34, { fontFace: 'Aptos', fontSize: 15, color: accent, bold: true })
-    addLine(slide, 2.45, y + 0.34, 0.52, 0, accent, 3)
-    addText(slide, title, 3.18, y + 0.08, 1.55, 0.4, { fontSize: 19, color: C.ink, bold: true })
-    addText(slide, body, 4.85, y + 0.08, 6.95, 0.5, { fontSize: 14, color: C.softInk })
+  demo.forEach(function (item, index) {
+    const x = 0.82 + index * 3.0
+    addRect(slide, x, 5.56, 2.68, 0.82, index === 3 ? C.greenSoft : C.white, index === 3 ? C.green : C.line, true)
+    addText(slide, item[0], x + 0.16, 5.7, 0.92, 0.28, {
+      fontFace: 'Aptos',
+      fontSize: 9.5,
+      color: index === 3 ? C.green : C.teal,
+      bold: true
+    })
+    addText(slide, item[1], x + 1.0, 5.66, 1.5, 0.42, {
+      fontSize: 10.5,
+      color: C.softInk,
+      bold: true,
+      align: 'center'
+    })
   })
-  addRect(slide, 0.78, 6.15, 5.72, 0.66, C.greenSoft, C.greenSoft, true)
-  addText(slide, '成功标准：任务推进可见 + 产物可打开 + 验证可复述', 1.02, 6.27, 5.26, 0.36, { fontSize: 14, color: C.green, bold: true, align: 'center' })
-  addRect(slide, 6.75, 6.15, 5.72, 0.66, C.amberSoft, C.amberSoft, true)
-  addText(slide, '网络兜底：packaged health + 预生成产物 + 最新截图', 6.98, 6.27, 5.26, 0.36, { fontSize: 14, color: C.amber, bold: true, align: 'center' })
-  addFooter(slide, 15, '演示时只跑一条主流程；不在台上临时安装依赖或修改 Provider')
-  addNotes(slide, 15, '现场演示脚本', '40 秒', [
-    '演示前准备一个小型、确定性高的项目任务，避免现场跑超长任务。',
-    '每一步都说“用户看到了什么”，不要讲后台代码细节。',
-    '发生网络问题时立即切换兜底证据，不把答辩时间消耗在调试。'
+  addText(slide, '每个阶段按行为指标验收，不以“新增多少功能”验收。', 1.4, 6.62, 10.55, 0.34, {
+    fontSize: 14.5,
+    color: C.ink,
+    bold: true,
+    align: 'center'
+  })
+  addFooter(slide, 18, '路线图优先级：稳定发布 → 真实激活 → 留存与单位经济')
+  addNotes(slide, 18, '路线图与现场演示', '45 秒', [
+    '前四周解决发布级稳定性，第二阶段验证首批 Cohort，第三阶段再决定规模化。',
+    '现场演示严格控制三分钟，覆盖配置、过程、产物和安全边界。',
+    '每个阶段都用行为指标验收，而不是继续堆叠功能数量。'
   ])
 }
 
-// 16 Close
+// 19 Close
 {
   const slide = baseSlide(C.black)
-  addImageContain(slide, wordmark, 920 / 240, 0.72, 0.58, 3.8, 0.98)
-  addText(slide, '可执行的 AI', 0.76, 1.95, 3.65, 0.62, { fontSize: 30, color: C.white, bold: true })
-  addText(slide, '+ 可验证的工程', 0.76, 2.7, 4.45, 0.62, { fontSize: 30, color: '8FD4CF', bold: true })
-  addText(slide, '+ 可扩展的生态', 0.76, 3.45, 4.45, 0.62, { fontSize: 30, color: 'F2BE73', bold: true })
-  addText(slide, '这就是 BAI Work。', 0.76, 4.58, 4.6, 0.5, { fontSize: 22, color: 'CDD4DB', bold: true })
+  addImageContain(slide, wordmark, 920 / 240, 0.72, 0.58, 3.9, 1.02)
+  addText(slide, '简单，不代表能力少。', 0.76, 2.02, 5.15, 0.62, { fontSize: 29, color: C.white, bold: true })
+  addText(slide, '而是把复杂度留在系统里。', 0.76, 2.82, 5.45, 0.62, { fontSize: 29, color: '8FD4CF', bold: true })
+  addText(slide, '30 秒完成配置，持续看见推进，最终拿到可验收产物。', 0.76, 3.9, 5.6, 0.82, {
+    fontSize: 18,
+    color: 'CDD4DB',
+    bold: true,
+    valign: 'top'
+  })
   const recap = [
-    ['技术创新性 · 20', 'Runtime Host + 稳定 /v1/* + 可观测状态机', C.teal],
-    ['产品完成度 · 25', '三平台产物、可运行应用、1,144 项测试', C.blue],
-    ['商业生态 · 20', '个人 → 团队 → 能力市场的递进路径', C.coral],
-    ['AI 应用 · 20', '上下文、工具、产物、验证、记忆完整闭环', C.amber],
-    ['展示表达 · 15', '3 分钟主流程演示 + 网络兜底证据', C.green]
+    ['轻量架构', '项目级 Runtime Host 与最短执行链', C.teal],
+    ['Token Economy', '占用率门控与三层上下文压缩', C.amber],
+    ['EBAI', '语义映射、来源追溯与项目级信任', C.coral],
+    ['产品交付', '三平台路径、自动化测试与运行证据', C.blue],
+    ['商业增长', '限量半价、额度封顶与 Cohort 验证', C.green]
   ]
-  recap.forEach(([title, evidence, accent], index) => {
+  recap.forEach(function (item, index) {
     const y = 0.78 + index * 1.02
     addRect(slide, 6.0, y, 6.55, 0.78, C.slate, C.slate, true)
-    addRect(slide, 6.0, y, 0.08, 0.78, accent)
-    addText(slide, title, 6.28, y + 0.13, 1.7, 0.3, { fontFace: 'Aptos', fontSize: 11.5, color: accent, bold: true })
-    addText(slide, evidence, 8.08, y + 0.11, 4.15, 0.4, { fontSize: 13, color: C.white, bold: true })
+    addRect(slide, 6.0, y, 0.08, 0.78, item[2])
+    addText(slide, item[0], 6.28, y + 0.13, 1.75, 0.3, {
+      fontFace: 'Aptos',
+      fontSize: 11.5,
+      color: item[2],
+      bold: true
+    })
+    addText(slide, item[1], 8.12, y + 0.11, 4.05, 0.4, {
+      fontSize: 13,
+      color: C.white,
+      bold: true
+    })
   })
   addRect(slide, 6.0, 6.02, 6.55, 0.78, C.paper, C.paper, true)
-  addText(slide, '下一步：3—5 个试点团队 · official service contract · 可信签名发布', 6.25, 6.17, 6.05, 0.42, { fontSize: 13.5, color: C.ink, bold: true, align: 'center' })
-  addText(slide, 'github.com/2830500285/BAI-Work', 0.76, 6.72, 4.55, 0.3, { fontFace: 'Aptos', fontSize: 11.5, color: '8FD4CF' })
-  addNotes(slide, 16, '收束与评审要点回收', '35 秒', [
-    '用一句话回收：可执行的 AI、可验证的工程、可扩展的生态。',
-    '沿五项评分标准各给一个证据，不请求评委记住全部功能。',
-    '最后给出具体下一步：试点团队、官方 service contract 对齐和可信签名发布。'
+  addText(slide, '下一步：稳定签名发布 · 首批用户验证 · 项目级生态扩展', 6.25, 6.17, 6.05, 0.42, {
+    fontSize: 13.5,
+    color: C.ink,
+    bold: true,
+    align: 'center'
+  })
+  addText(slide, 'github.com/2830500285/BAI-Work', 0.76, 6.72, 4.55, 0.3, {
+    fontFace: 'Aptos',
+    fontSize: 11.5,
+    color: '8FD4CF'
+  })
+  addNotes(slide, 19, '收束', '30 秒', [
+    '最后一句：简单不是删掉能力，而是把架构、配置和安全复杂度留在系统内部。',
+    'BAI Work 通过轻量架构、Token Economy、EBAI 和工程交付形成完整差异化。',
+    '下一步是稳定签名发布并用首批真实用户数据验证留存与单位经济。'
   ])
 }
 
-const scriptHeader = `# BAI Work 项目答辩逐页讲稿\n\n- 建议总时长：约 12 分钟（含 3 分钟产品演示）\n- 核心原则：先展示可运行产品，再讲技术差异，最后回收评分证据。\n- 答辩文件：\`BAI-Work-Defense-Deck.pptx\`\n\n`
+const scriptHeader =
+  '# BAI Work 项目答辩逐页讲稿\n\n' +
+  '- 建议总时长：约 12 分钟（含 3 分钟产品演示）\n' +
+  '- 核心叙事：项目级轻量架构优于通用多通道架构在项目交付场景中的适配度。\n' +
+  '- 答辩文件：BAI-Work-Defense-Deck.pptx\n\n'
 
 fs.writeFileSync(scriptOutput, scriptHeader + scriptSections.join('\n'))
 
 pptx.writeFile({ fileName: output })
-  .then(() => {
-    console.log(`[defense-deck] wrote ${output}`)
-    console.log(`[defense-deck] wrote ${scriptOutput}`)
-    console.log(`[defense-deck] slides: ${pptx._slides.length}`)
+  .then(function () {
+    console.log('[defense-deck] wrote ' + output)
+    console.log('[defense-deck] wrote ' + scriptOutput)
+    console.log('[defense-deck] slides: ' + pptx._slides.length)
   })
-  .catch((error) => {
+  .catch(function (error) {
     console.error(error)
     process.exitCode = 1
   })

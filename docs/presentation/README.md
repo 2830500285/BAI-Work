@@ -4,7 +4,7 @@ This folder contains the BAI Work project presentation.
 
 ## Files
 
-- `BAI-Work-Defense-Deck.pptx`: 16-slide Chinese hackathon defense deck organized around the 100-point judging rubric.
+- `BAI-Work-Defense-Deck.pptx`: 19-slide Chinese hackathon defense deck centered on lightweight project architecture, Token Economy, EBAI, product simplicity, and commercial validation.
 - `BAI-Work-Defense-Script.md`: slide-by-slide timing, delivery notes, and the three-minute live-demo playbook.
 - `defense-deck-source.cjs`: PptxGenJS source for the defense deck.
 - `BAI-Work-Project-Deck.pptx`: final PowerPoint deck.
@@ -13,24 +13,28 @@ This folder contains the BAI Work project presentation.
 
 ## Defense Deck Structure
 
-The defense deck maps directly to the judging rubric:
+The defense deck follows a product-first technical narrative without displaying
+numeric judging scores:
 
-1. Cover and scoring map
-2. One-line pitch and problem
-3. Live product demo story
-4. Product completeness
-5. Stable runtime-host architecture
-6. Observable long-running task state machine
-7. Full AI agent loop
-8. Open-source ecosystem integration
-9. Trust and hooks safety boundary
-10. Cross-platform and test evidence
-11. Target users and real demand
-12. Commercial model hypotheses
-13. Ecosystem flywheel
-14. Twelve-week roadmap and metrics
-15. Three-minute live-demo playbook
-16. Judging-criteria recap
+1. Cover and product thesis
+2. Project-delivery problem
+3. Thirty-second API-key onboarding
+4. Live product demo story
+5. Product completeness
+6. Lightweight Runtime Host architecture
+7. Project-level differentiation from BAI-Claw
+8. Observable long-running task state machine
+9. Token Economy occupancy-ratio gating
+10. Three-layer context-reduction algorithm
+11. EBAI source, cache, and semantic mapping pipeline
+12. EBAI project-scoped hook safety
+13. Full AI agent loop
+14. BAI Work / BAI-Claw / BAI Code positioning matrix
+15. Cross-platform and test evidence
+16. Target users and market entry
+17. Controlled half-price launch experiment
+18. Twelve-week roadmap and three-minute demo playbook
+19. Evidence-based close
 
 Generate it from the project root with the bundled Codex presentation runtime:
 
@@ -44,15 +48,16 @@ NODE_PATH=/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/no
 
 Last checked on 2026-07-11:
 
-- Source generation passed and produced 16 slides.
+- Source generation passed and produced 19 slides.
 - The PPTX archive passed `unzip -t` with no compressed-data errors.
-- The archive contains 16 slide XML files and 16 speaker-note XML files.
-- LibreOffice converted the deck to a 16-page PDF without errors.
-- All 16 rendered pages were reviewed as a montage; high-density architecture,
-  AI-loop, business-model, roadmap, demo, and closing slides were also checked
-  individually at full resolution.
-- The deck source and speaker script contain no API key or legacy MIMO/Kun
-  product wording.
+- The archive contains 19 slide XML files and 19 speaker-note XML files.
+- LibreOffice converted the deck to a 19-page PDF without errors.
+- All pages were reviewed as a montage; the architecture comparison, Token
+  Economy, EBAI, positioning, commercial launch, and roadmap slides were also
+  checked individually at full resolution.
+- The deck intentionally omits numeric judging-score chips and third-party
+  product branding from visible slide content.
+- No API key, token, or credential value is included.
 
 ## Deck Structure
 
