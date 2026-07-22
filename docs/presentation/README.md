@@ -4,7 +4,7 @@ This folder contains the BAI Work project presentation.
 
 ## Files
 
-- `BAI-Work-Defense-Deck.pptx`: 19-slide Chinese hackathon defense deck centered on a lightweight project architecture, verifiable context-budget controls, EBAI, engineering evidence, and commercial validation.
+- `BAI-Work-Defense-Deck.pptx`: 19-slide Chinese hackathon defense deck centered on a lightweight project architecture, verifiable context-budget controls, EBAI, engineering evidence, OpenAI contributor provenance, and commercial validation.
 - `BAI-Work-Defense-Script.md`: slide-by-slide timing, delivery notes, and the three-minute live-demo playbook.
 - `defense-deck-source.cjs`: PptxGenJS source for the defense deck.
 - `BAI-Work-Project-Deck.pptx`: final PowerPoint deck.
@@ -30,7 +30,7 @@ numeric judging scores:
 12. EBAI hook capability model and runtime execution boundary
 13. Full AI agent loop
 14. End-to-end BAI Work engineering evidence chain
-15. Cross-platform and test evidence
+15. OpenAI upstream contribution and BAI Work reliability inheritance
 16. Target users and market entry
 17. Controlled half-price launch experiment
 18. Twelve-week roadmap
@@ -46,18 +46,19 @@ NODE_PATH=/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/no
 
 ## Defense Deck Validation
 
-Last checked on 2026-07-21:
+Last checked on 2026-07-22:
 
 - Source generation passed and produced 19 slides.
 - The PPTX archive passed `unzip -t` with no compressed-data errors.
 - The archive contains 19 slide XML files and 19 speaker-note XML files.
 - LibreOffice converted the deck to a 19-page PDF without errors.
 - All pages were reviewed as a montage; the Runtime Host, context-budget,
-  EBAI, evidence-chain, commercial launch, and roadmap slides were also checked
-  individually at full resolution.
+  EBAI, evidence-chain, OpenAI contributor, commercial launch, and roadmap
+  slides were also checked individually at full resolution.
 - The deck intentionally omits numeric judging-score chips and external product
   comparisons from visible slide content.
 - The full Vitest baseline passed: 168 test files and 1,144 tests.
+- Slide 15 cites OpenAI Agents SDK PR #3642 and the official v0.17.7 release. It distinguishes a shared reliability principle from direct code reuse, and treats GPT-5.6 Codex participation as the contributor's development record rather than a claim that Codex embeds the PR code.
 - The Token Economy pages use only current settings, schema, normalizer, and
   telemetry behavior; unsupported formulas and claimed savings percentages are
   not shown.

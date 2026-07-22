@@ -983,27 +983,27 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 15 Engineering proof
+// 15 OpenAI upstream contribution and BAI Work reliability inheritance
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 15, '工程证据：不是原型截图，而是可构建的软件', '交付验证', C.blue, 'ENGINEERING PROOF')
+  addHeader(slide, 15, '把 Agent 可靠性写进上游，也写进 BAI Work', '技术背书', C.blue, 'UPSTREAM CONTRIBUTION')
   const metrics = [
-    ['3', '桌面平台', 'Mac Intel / Apple Silicon / Windows', C.blue],
-    ['168', '测试文件', '覆盖 main、runtime、renderer 与服务', C.teal],
-    ['1,144', '自动化测试', '完整测试基线', C.green],
-    ['0.9.1', 'BAI Code', 'Mac Intel packaged runtime', C.coral]
+    ['OPENAI', 'Contributor', '@2830500285 · 首次贡献者', C.blue],
+    ['#3642', 'Merged PR', 'OpenAI Agents SDK main', C.teal],
+    ['v0.17.7', '正式发布', '官方 release 收录', C.green],
+    ['GPT-5.6', 'ChatGPT Codex', '贡献流程采用', C.coral]
   ]
   metrics.forEach(function (item, index) {
     const x = 0.72 + index * 3.0
     addRect(slide, x, 1.82, 2.68, 1.68, C.white, C.line, true)
     addMetric(slide, item[0], item[1], x + 0.22, 2.04, 2.24, item[3], item[2])
   })
-  const platforms = [
-    ['macOS Intel x64', '自包含 Python 3.11 + BAI Code runtime', '本机构建与运行'],
-    ['macOS arm64', '官方运行时 wheelhouse + 用户目录环境', '原生构建与 smoke'],
-    ['Windows x64', '官方 win_amd64 wheelhouse + 安装包', '原生构建与 smoke']
+  const principles = [
+    ['有界状态', '上游释放缓冲；BAI Work：pending 上限 50，消费即删', '长跑不涨'],
+    ['无重复续传', '上游不重复写入；BAI Work：单调 seq + 跨批去重', '重连不重'],
+    ['超时恢复', '上游超时落盘；BAI Work：SSE 续传 + 退避熔断', '失败可恢复']
   ]
-  platforms.forEach(function (item, index) {
+  principles.forEach(function (item, index) {
     const y = 4.02 + index * 0.76
     addRect(slide, 0.72, y, 2.55, 0.56, index === 0 ? C.blue : C.slate, index === 0 ? C.blue : C.slate, true)
     addText(slide, item[0], 0.9, y + 0.09, 2.18, 0.3, {
@@ -1017,18 +1017,19 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     addPill(slide, item[2], 9.38, y + 0.1, 2.9, index === 0 ? C.blueSoft : C.greenSoft, index === 0 ? C.blue : C.green, 10)
   })
   addRect(slide, 0.72, 6.44, 11.88, 0.42, C.slateSoft, C.slateSoft, true)
-  addText(slide, '验证链：typecheck → lint → unit tests → production build → desktop package → packaged runtime smoke', 0.98, 6.5, 11.35, 0.26, {
+  addText(slide, '原则复用，非代码移植：把经 OpenAI 主线验证的可靠性不变量，产品化为 BAI Work Runtime Host 的默认行为。', 0.98, 6.5, 11.35, 0.26, {
     fontFace: 'Aptos',
     fontSize: 11.5,
     color: C.slate,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 15, '当前主版本：Mac Intel x86_64；其余平台保持同源实现与原生验证')
-  addNotes(slide, 15, '工程验证证据', '40 秒', [
-    '四个数字证明项目已有真实工程规模和自动化验证。',
-    'Mac Intel 是当前迭代主版本，其他平台保持同源构建和原生 smoke。',
-    '商业发布仍需正式签名和公证凭据，这一风险在路线图中明确。'
+  addFooter(slide, 15, '公开证据：OpenAI Agents SDK PR #3642 · v0.17.7 release；GPT-5.6 Codex 使用情况来自贡献者研发记录')
+  addNotes(slide, 15, '上游贡献与 BAI Work 可靠性', '50 秒', [
+    '我以 @2830500285 身份向 OpenAI Agents SDK 贡献 PR #3642，并随 v0.17.7 正式发布，官方 release 将我列为首次贡献者。',
+    '这项贡献解决长时 Agent 沙箱中的缓冲增长、重复写入和网络超时落盘问题。',
+    'BAI Work 没有移植该段 Python 代码，而是在 Runtime Host 中独立落实同一工程原则：pending 有界、事件游标去重、SSE 断点续传、指数退避与熔断。',
+    'GPT-5.6 ChatGPT Codex 用于本次贡献流程的协作与复核；公开仓库只证明 PR 合并与版本发布，因此不宣称 Codex 产品直接集成这段代码。'
   ])
 }
 
