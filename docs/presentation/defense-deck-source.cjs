@@ -907,8 +907,8 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addLine(slide, 6.22, 3.24, 0, 1.02, C.muted, 1.5, 'triangle')
   addLine(slide, 4.87, 4.9, -0.92, 0, C.muted, 1.5, 'triangle')
   addLine(slide, 2.62, 4.3, 0, -0.98, C.muted, 1.5, 'triangle')
-  addRect(slide, 2.62, 3.44, 4.18, 0.7, C.slate, C.slate, true)
-  addText(slide, '验证门：结果一致性 · 文件存在性 · 测试与运行证据', 2.86, 3.56, 3.7, 0.42, {
+  addRect(slide, 3.0, 3.44, 2.85, 0.7, C.slate, C.slate, true)
+  addText(slide, '验证门：结果一致 · 文件存在 · 测试/运行证据', 3.14, 3.54, 2.57, 0.46, {
     fontSize: 13,
     color: C.white,
     bold: true,
