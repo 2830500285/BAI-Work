@@ -20,8 +20,9 @@ workflows.
   context, file references, side conversations, checkpoints, and review
   surfaces.
 - **Engineering guardrails**: bundled BAI Work guardrails and Hermes-derived
-  skills, an EBAI mapping installer, installable Agent-Reach, and optional
-  external MCP servers.
+  skills, the EBAI product capability system for commands, agent workflows,
+  skills, rules, and project-scoped hook manifests, installable Agent-Reach,
+  and optional external MCP servers.
 - **Desktop app**: native Mac Intel, Mac Apple Silicon, and Windows x64
   Electron releases with local-only service defaults.
 

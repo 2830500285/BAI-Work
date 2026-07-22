@@ -471,7 +471,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     ['实时进度', '步骤、工具摘要与错误恢复'],
     ['文件与产物', '引用、预览、差异与文档'],
     ['长期记忆', '用户、工作区与项目作用域'],
-    ['能力扩展', 'EBAI、技能与任务自动化']
+    ['产品能力', 'EBAI 命令、技能、规则与自动化']
   ]
   capabilities.forEach(function (item, index) {
     const col = index % 3
@@ -492,13 +492,13 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addMetric(slide, '3', '桌面目标', 0.98, 5.28, 1.8, C.blue, 'mac-x64 / mac-arm64 / win-x64')
   addMetric(slide, '168', '测试文件', 3.3, 5.28, 1.8, C.teal, 'main / runtime / renderer')
   addMetric(slide, '/v1/*', '本地服务边界', 5.62, 5.28, 1.8, C.amber, '稳定桌面接口')
-  addMetric(slide, 'EBAI', '能力映射', 7.94, 5.28, 1.8, C.coral, '安装与启用分离')
+  addMetric(slide, '5', 'EBAI 能力形态', 7.94, 5.28, 1.8, C.coral, 'Command · Agent · Skill · Rule · Hook')
   addMetric(slide, '1', '连续工作流', 10.26, 5.28, 1.8, C.green, '任务到产物再到复用')
-  addFooter(slide, 5, '当前实现证据：README · runtime adapter · EBAI mapping tests')
+  addFooter(slide, 5, '当前实现证据：README · runtime adapter · EBAI capability tests')
   addNotes(slide, 5, '产品完成度', '40 秒', [
     '完成度从用户生命周期衡量：配置、执行、观察、审阅、沉淀都在一个工作面完成。',
     '三平台目标和稳定本地服务边界证明它不是一次性原型。',
-    'EBAI 强调安装、映射与启用的安全边界，不用无法离线复现的资源数量包装完成度。'
+    'EBAI 的 Commands、Agents、Skills、Rules 和 Hooks 是 BAI Work 面向用户的产品能力；来源与安装不定义它的产品身份。'
   ])
 }
 
@@ -783,19 +783,19 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 11 EBAI mapping
+// 11 EBAI product capability system
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 11, 'EBAI：把外部能力资产转译为 BAI 原生结构', '能力兼容层', C.coral, 'EBAI TECHNICAL PIPELINE')
-  const pipeline = [
-    ['Remote Index', '递归索引\n版本与来源记录', C.slateSoft, C.slate],
-    ['Safety Gate', '路径校验\n大小与数量上限', C.redSoft, C.red],
-    ['Staging Cache', '并发下载\n随机暂存目录', C.blueSoft, C.blue],
-    ['Atomic Swap', '完整后 rename\n避免半安装状态', C.tealSoft, C.teal],
-    ['Semantic Mapper', '命令 / Agent / Rule\nSkill / Hook 转译', C.amberSoft, C.amber],
-    ['BAI Home', '用户目录与\n项目作用域目标', C.greenSoft, C.green]
+  addHeader(slide, 11, 'EBAI：BAI Work 面向用户的能力体系', '产品能力层', C.coral, 'EBAI PRODUCT CAPABILITY SYSTEM')
+  const capabilities = [
+    ['EBAI', '能力随应用呈现\n统一产品身份', C.slateSoft, C.slate],
+    ['Commands', '项目命令\n运行时可加载', C.redSoft, C.red],
+    ['Agents', '专业角色\n以命令工作流接入', C.blueSoft, C.blue],
+    ['Skills', '任务方法\n运行时可加载', C.tealSoft, C.teal],
+    ['Rules', '行为约束\n以 Skill 指令接入', C.amberSoft, C.amber],
+    ['Hooks', '自动化契约\nManifest 已生成', C.greenSoft, C.green]
   ]
-  pipeline.forEach(function (item, index) {
+  capabilities.forEach(function (item, index) {
     const x = 0.55 + index * 2.08
     addRect(slide, x, 1.98, 1.7, 1.62, item[2], item[2], true)
     addText(slide, item[0], x + 0.1, 2.22, 1.5, 0.34, {
@@ -811,51 +811,50 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
       align: 'center',
       breakLine: true
     })
-    if (index < pipeline.length - 1) addLine(slide, x + 1.73, 2.8, 0.27, 0, C.muted, 1.1, 'triangle')
   })
   addRect(slide, 0.72, 4.15, 5.7, 1.7, C.white, C.line, true)
-  addText(slide, '资源约束', 0.98, 4.44, 1.0, 0.3, { fontSize: 14, color: C.coral, bold: true })
+  addText(slide, '用户可用能力', 0.98, 4.44, 1.0, 0.3, { fontSize: 14, color: C.coral, bold: true })
   addBulletList(slide, [
-    '最多 3,000 文件 · 单文件 2 MiB · 总量 96 MiB',
-    '下载并发度 8；拒绝绝对路径、反斜杠与路径穿越',
-    '标记 source / ref / commit / file count，支持追溯'
+    '命令、技能与规则进入任务上下文',
+    'Agent 以专业命令工作流对用户呈现',
+    'Hooks 保留能力定义，执行契约待 Runtime 支持'
   ], 2.05, 4.36, 4.0, 0.43, C.softInk, 11.5, C.coral)
   addRect(slide, 6.72, 4.15, 5.88, 1.7, C.slate, C.slate, true)
-  addText(slide, '安装目标', 7.02, 4.44, 1.0, 0.3, { fontSize: 14, color: '8FD4CF', bold: true })
-  addText(slide, '~/.bai/commands\n~/.bai/skills\n~/.bai/skills/ebai-rules\n~/.bai/ebai/hooks/hooks.toml', 8.3, 4.32, 3.92, 1.12, {
+  addText(slide, '当前状态', 7.02, 4.44, 1.0, 0.3, { fontSize: 14, color: '8FD4CF', bold: true })
+  addText(slide, 'Commands · Skills：安装后可加载\nAgents：命令化接入\nRules：Skill 化接入\nHooks：默认关闭', 8.3, 4.32, 3.92, 1.12, {
     fontFace: 'Aptos',
     fontSize: 13,
     color: C.white,
     breakLine: true,
     valign: 'top'
   })
-  addText(slide, 'EBAI 不是文本替换，而是带来源、冲突处理与安全约束的语义迁移。', 1.22, 6.34, 10.9, 0.42, {
+  addText(slide, '这些能力就是 BAI Work 的产品能力；来源与安装只属于内部交付方式。', 1.22, 6.34, 10.9, 0.42, {
     fontSize: 16,
     color: C.ink,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 11, '实现证据：EBAI source service · EBAI mapping service · mapping tests')
-  addNotes(slide, 11, 'EBAI 技术实现', '60 秒', [
-    'EBAI 从远程索引开始，经过安全门、暂存缓存、原子替换和语义映射后进入 BAI 用户目录。',
-    '资源限制、路径校验和来源标记保证安装过程可控、可追溯、不会留下半安装状态。',
-    '命令、Agent、规则、技能和 Hook 使用不同映射规则，不是简单文本替换。'
+  addFooter(slide, 11, '实现证据：runtime instruction loader · component install tests · hook manifest guard')
+  addNotes(slide, 11, 'EBAI 产品能力体系', '60 秒', [
+    'EBAI 的产品定义是 BAI Work 面向用户的能力体系；来源与安装只属于内部交付方式。',
+    '当前 Commands 和 Skills 可被运行时加载，Agents 以命令工作流接入，Rules 以 Skill 指令接入。',
+    'Hooks 当前仅生成默认关闭的 manifest；来源与安装是内部交付方式，不定义 EBAI 的产品身份。'
   ])
 }
 
 // 12 EBAI hooks safety
 {
   const slide = baseSlide()
-  addHeader(slide, 12, 'EBAI Hooks：转换能力，但不自动扩大执行权限', '可信执行', C.amber, 'PROJECT-SCOPED HOOKS')
+  addHeader(slide, 12, 'EBAI Hooks：能力已纳入产品体系，执行仍服从 Runtime 契约', '能力边界', C.amber, 'HOOK CAPABILITY BOUNDARY')
   addRect(slide, 0.72, 1.78, 5.45, 4.72, C.white, C.line, true)
-  addText(slide, '事件语义转换', 1.0, 2.05, 2.2, 0.38, { fontSize: 19, color: C.amber, bold: true })
+  addText(slide, 'Hook 能力模型', 1.0, 2.05, 2.2, 0.38, { fontSize: 19, color: C.amber, bold: true })
   const mappings = [
-    ['PreToolUse', 'tool_call_before'],
-    ['PostToolUse', 'tool_call_after'],
-    ['SessionStart', 'session_start'],
-    ['SessionEnd', 'session_end'],
-    ['Stop', 'turn_end'],
-    ['UserPromptSubmit', 'message_submit']
+    ['消息', 'message_submit'],
+    ['会话开始', 'session_start'],
+    ['工具调用前', 'tool_call_before'],
+    ['工具调用后', 'tool_call_after'],
+    ['轮次结束', 'turn_end'],
+    ['会话结束', 'session_end']
   ]
   mappings.forEach(function (item, index) {
     const y = 2.62 + index * 0.5
@@ -864,23 +863,23 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     addText(slide, item[1], 3.42, y, 2.16, 0.28, { fontFace: 'Aptos', fontSize: 11, color: C.teal, bold: true })
   })
   addRect(slide, 6.52, 1.78, 6.08, 4.72, C.slate, C.slate, true)
-  addText(slide, '默认安全策略', 6.86, 2.05, 2.3, 0.38, { fontSize: 19, color: 'F2BE73', bold: true })
+  addText(slide, '当前交付状态', 6.86, 2.05, 2.3, 0.38, { fontSize: 19, color: 'F2BE73', bold: true })
   addBulletList(slide, [
-    '全局 manifest 始终 enabled = false',
-    '启用必须显式选择受信任 workspace',
-    '只写入 <workspace>/.bai/hooks.toml',
-    '复制规则时拒绝符号链接与不安全路径',
-    '外部可执行脚本必须用户主动授权',
-    '支持 dry-run、force、overwrite 与 skip 摘要'
+    '生成的全局 manifest 始终 enabled = false',
+    '当前设置页 Hook 开关保持禁用',
+    'BAI Code 0.9.1 尚无 Hook 执行契约',
+    '只有显式工作区才允许生成项目配置',
+    '不安全路径与符号链接会被拒绝',
+    '未支持事件被记录，不伪装为已执行'
   ], 6.9, 2.72, 5.15, 0.55, 'DDE4E9', 13, C.amber)
-  addPill(slide, '默认关闭', 7.02, 5.98, 1.35, C.red, C.white, 11)
-  addPill(slide, '项目作用域', 8.63, 5.98, 1.48, C.teal, C.white, 11)
-  addPill(slide, '显式信任', 10.37, 5.98, 1.35, C.green, C.white, 11)
-  addFooter(slide, 12, '安全原则：安装不等于执行；能力转译不等于隐式信任')
+  addPill(slide, '能力已建模', 7.02, 5.98, 1.35, C.red, C.white, 11)
+  addPill(slide, '执行未开放', 8.63, 5.98, 1.48, C.teal, C.white, 11)
+  addPill(slide, '边界可验证', 10.37, 5.98, 1.35, C.green, C.white, 11)
+  addFooter(slide, 12, '交付原则：产品能力与当前可执行状态分开陈述；未开放能力不冒充为已生效')
   addNotes(slide, 12, 'EBAI Hook 安全', '50 秒', [
-    'Hook 转换为 BAI 项目级 TOML，但全局 manifest 默认始终关闭。',
-    '只有用户明确选择受信任工作区后，才会写入项目级 hooks.toml。',
-    '这种设计把高价值自动化能力与执行信任分开，避免安装即执行。'
+    'Hook 已作为 EBAI 产品能力之一被建模，覆盖消息、会话和工具调用生命周期。',
+    '当前交付范围是生成默认关闭的 manifest，设置页开关禁用，BAI Code 0.9.1 也没有 Hook 执行契约。',
+    '因此答辩只宣称能力定义、配置边界与安全策略已实现，不把 Hook 冒充为已执行。'
   ])
 }
 
@@ -956,7 +955,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     ['配置进入', '完成服务与模型就绪', '凭据隔离 · 探测 · 能力发现', '连接与模型发现测试'],
     ['任务执行', '项目内发起并持续看见推进', 'Runtime Host · SSE 归一化', '适配器与流式事件测试'],
     ['上下文经济', '请求预算与摘要边界可配置', '历史卫生 · 压缩配置契约', '默认值与输入边界测试'],
-    ['能力复用', '安装、映射与启用彼此分离', 'EBAI 索引 · 安全门 · 项目 Hook', '映射与 Hook 安全测试'],
+    ['能力体系', '五类能力归入 BAI Work 产品体验', '命令/技能加载 · Rule 指令 · Hook manifest', '加载与 manifest 安全测试'],
     ['产物交付', '回答、文件、差异与摘要分区', '结果区与项目文件联动', '文件存在性与差异证据'],
     ['工程验收', '从代码验证到桌面包体', '类型检查 · 测试 · 构建 · 打包', '自动化测试与运行 smoke']
   ]
@@ -1207,7 +1206,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   const recap = [
     ['轻量架构', '项目级 Runtime Host 与最短执行链', C.teal],
     ['Token Economy', '请求预算与上下文治理契约', C.amber],
-    ['EBAI', '语义映射、来源追溯与项目级信任', C.coral],
+    ['EBAI', '产品能力体系与清晰执行边界', C.coral],
     ['产品交付', '三平台路径、自动化测试与运行证据', C.blue],
     ['商业增长', '限量半价、额度封顶与 Cohort 验证', C.green]
   ]

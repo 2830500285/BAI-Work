@@ -26,8 +26,8 @@ numeric judging scores:
 8. Observable long-running task state machine
 9. Token Economy request-budget control surface
 10. History-hygiene and context-compaction configuration contract
-11. EBAI source, cache, and semantic mapping pipeline
-12. EBAI project-scoped hook safety
+11. EBAI product capability system with current runtime availability
+12. EBAI hook capability model and runtime execution boundary
 13. Full AI agent loop
 14. End-to-end BAI Work engineering evidence chain
 15. Cross-platform and test evidence
@@ -80,7 +80,7 @@ The deck has 22 slides:
 11. BAI Code distribution strategy
 12. Official service contract gap
 13. Provider and model configuration
-14. EBAI mapping
+14. EBAI capability delivery
 15. EBAI hooks safety
 16. Cross-platform build matrix
 17. Release chain

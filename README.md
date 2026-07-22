@@ -15,7 +15,7 @@ BAI Work is a desktop agent workbench built around the BAI Code runtime. It focu
 - **BAI Code core**: packages and invokes the official `baicode` CLI, with a small BAI Work bridge for desktop threads, live progress, estimated usage, and generated artifacts.
 - **BAI providers first**: built-in support for the official BAI API plus custom OpenAI-compatible providers.
 - **Project workflow**: project-scoped conversations, workspace selection, Git context, file references, side conversations, checkpoints, and review surfaces.
-- **Engineering guardrails**: bundled BAI Work guardrails and Hermes-derived skills, an EBAI mapping installer, installable Agent-Reach, and optional external MCP servers.
+- **Engineering guardrails**: bundled BAI Work guardrails and Hermes-derived skills, the EBAI product capability system for commands, agent workflows, skills, rules, and project-scoped hook manifests, installable Agent-Reach, and optional external MCP servers.
 - **Desktop app**: native Mac Intel, Mac Apple Silicon, and Windows x64 Electron releases with local-only service defaults.
 
 ## Quick Start
