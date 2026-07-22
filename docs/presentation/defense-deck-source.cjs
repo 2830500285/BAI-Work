@@ -171,12 +171,7 @@ function addHeader(slide, number, title, section, accent, eyebrow) {
   addLine(slide, 0.58, 1.42, 12.15, 0, C.line, 1)
 }
 
-function addFooter(slide, number, source) {
-  addText(slide, source || 'BAI Work · Genesis Hackathon', 0.58, 7.16, 9.9, 0.18, {
-    fontFace: 'Aptos',
-    fontSize: 8.3,
-    color: C.muted
-  })
+function addFooter(slide, number) {
   addText(slide, String(number).padStart(2, '0') + ' / ' + TOTAL_SLIDES, 11.75, 7.14, 0.98, 0.2, {
     fontFace: 'Aptos',
     fontSize: 8.3,
@@ -350,7 +345,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 2, '产品原则：以任务到产物的闭环效率为主目标')
+  addFooter(slide, 2)
   addNotes(slide, 2, '产品问题与定义', '35 秒', [
     '不要从功能数量开始，先说明真实项目任务为什么需要连续交付。',
     'BAI Work 的目标函数是缩短任务到产物的闭环，而不是覆盖所有通信场景。',
@@ -414,7 +409,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     color: C.muted,
     align: 'center'
   })
-  addFooter(slide, 3, '实现证据：provider connection · model discovery · protocol URL normalization')
+  addFooter(slide, 3)
   addNotes(slide, 3, '30 秒演示目标', '45 秒', [
     '用户只需提供 API Key，主进程完成服务探测、模型拉取、能力分类和保存。',
     '技术上使用凭据隔离、端点规范化、能力感知发现与幂等集合合并。',
@@ -453,7 +448,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     addText(slide, item[0], 8.78, y - 0.03, 1.35, 0.3, { fontSize: 14, color: C.ink, bold: true })
     addText(slide, item[1], 8.78, y + 0.28, 3.55, 0.32, { fontSize: 10.5, color: C.muted })
   })
-  addFooter(slide, 4, '现场演示使用当前 Mac Intel x86_64 构建')
+  addFooter(slide, 4)
   addNotes(slide, 4, '现场演示路径', '35 秒 + 3 分钟演示', [
     '演示只跑一条主流程：选项目、发任务、展开步骤、打开产物。',
     '每一步都说用户获得了什么信息，不在现场展开内部实现。',
@@ -494,7 +489,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addMetric(slide, '/v1/*', '本地服务边界', 5.62, 5.28, 1.8, C.amber, '稳定桌面接口')
   addMetric(slide, '5', 'EBAI 能力形态', 7.94, 5.28, 1.8, C.coral, 'Command · Agent · Skill · Rule · Hook')
   addMetric(slide, '1', '连续工作流', 10.26, 5.28, 1.8, C.green, '任务到产物再到复用')
-  addFooter(slide, 5, '当前实现证据：README · runtime adapter · EBAI capability tests')
+  addFooter(slide, 5)
   addNotes(slide, 5, '产品完成度', '40 秒', [
     '完成度从用户生命周期衡量：配置、执行、观察、审阅、沉淀都在一个工作面完成。',
     '三平台目标和稳定本地服务边界证明它不是一次性原型。',
@@ -551,7 +546,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     align: 'center',
     breakLine: true
   })
-  addFooter(slide, 6, '实现证据：runtime host · preload IPC · streaming adapter')
+  addFooter(slide, 6)
   addNotes(slide, 6, '轻量 Runtime Host 架构', '50 秒', [
     '核心创新不是桌面框架本身，而是单一 Runtime Host 对协议、凭据、文件和生命周期的收敛。',
     'Renderer 只消费稳定事件模型，因此上游变化不会扩散到整个界面。',
@@ -594,7 +589,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 7, '实现依据：runtime host · streaming adapter · project-scoped state')
+  addFooter(slide, 7)
   addNotes(slide, 7, '项目级 Runtime Host 数据链', '55 秒', [
     '这一页只解释 BAI Work 自身的架构选择：把桌面复杂度集中在 Runtime Host。',
     '工作台只消费稳定事件，项目上下文、状态、权限和产物则始终围绕 workspace 收敛。',
@@ -650,7 +645,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 8, '实现证据：stream normalization · progress timeline · failure sanitization tests')
+  addFooter(slide, 8)
   addNotes(slide, 8, '可观测状态机', '45 秒', [
     '事件流先去重、分类和清洗，再进入时间线和最终交付区。',
     '过程区展示工具动作和可验证状态，不展示模型内部思维链。',
@@ -708,7 +703,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 9, '实现证据：app settings · IPC schema · normalizer · usage telemetry guards')
+  addFooter(slide, 9)
   addNotes(slide, 9, 'Token Economy 控制面', '50 秒', [
     '这里展示的是当前代码中可复现的请求预算配置，不使用仓库里不存在的估算公式。',
     '历史保护限制发送请求时的超长工具结果和参数，原始聊天记录保持不变。',
@@ -775,7 +770,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 10, '实现证据：history hygiene defaults · compaction settings · validation bounds')
+  addFooter(slide, 10)
   addNotes(slide, 10, '上下文治理契约', '55 秒', [
     '第一层约束工具结果，第二层约束工具参数，第三层定义摘要阈值与资源预算。',
     '这些默认值和输入上限都能从共享设置、IPC schema 与 normalizer 中复现。',
@@ -847,7 +842,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 11, '实现证据：runtime instruction loader · component install tests · hook manifest guard')
+  addFooter(slide, 11)
   addNotes(slide, 11, 'EBAI 产品能力体系', '60 秒', [
     'EBAI 的产品定义是 BAI Work 面向用户的能力体系；来源与安装只属于内部交付方式。',
     '当前 Commands 和 Skills 可被运行时加载，Agents 以命令工作流接入，Rules 以 Skill 指令接入。',
@@ -888,7 +883,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addPill(slide, '能力已建模', 7.02, 5.98, 1.35, C.red, C.white, 11)
   addPill(slide, '执行未开放', 8.63, 5.98, 1.48, C.teal, C.white, 11)
   addPill(slide, '边界可验证', 10.37, 5.98, 1.35, C.green, C.white, 11)
-  addFooter(slide, 12, '交付原则：产品能力与当前可执行状态分开陈述；未开放能力不冒充为已生效')
+  addFooter(slide, 12)
   addNotes(slide, 12, 'EBAI Hook 安全', '50 秒', [
     'Hook 已作为 EBAI 产品能力之一被建模，覆盖消息、会话和工具调用生命周期。',
     '当前交付范围是生成默认关闭的 manifest，设置页开关禁用，BAI Code 0.9.1 也没有 Hook 执行契约。',
@@ -937,7 +932,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     '长期记忆与能力复用',
     '可选的签名与发布溯源方向'
   ], 8.9, 2.8, 3.05, 0.55, 'DDE4E9', 13, C.teal)
-  addFooter(slide, 13, 'AI 的价值通过任务闭环证明；生态溯源作为未来方向，不包装为当前能力')
+  addFooter(slide, 13)
   addNotes(slide, 13, 'Agent 执行闭环', '45 秒', [
     'BAI Work 的 AI 应用不是单次接口调用，而是上下文、规划、工具、产物和验证的闭环。',
     '验证门将“模型说完成了”转换为文件、差异、测试与运行证据。',
@@ -988,7 +983,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 14, '证据来源：BAI Work 当前代码 · 自动化测试 · 构建与运行结果')
+  addFooter(slide, 14)
   addNotes(slide, 14, '端到端工程证据链', '55 秒', [
     '这一页把前半段技术点收束为评委可以直接判断的证据链。',
     '从配置到工程验收，每个用户价值都对应明确的系统机制和验证入口。',
@@ -1037,7 +1032,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 15, '公开证据：OpenAI Agents SDK PR #3642 · v0.17.7 release；GPT-5.6 Codex 使用情况来自贡献者研发记录')
+  addFooter(slide, 15)
   addNotes(slide, 15, '上游贡献与 BAI Work 可靠性', '50 秒', [
     '我以 @2830500285 身份向 OpenAI Agents SDK 贡献 PR #3642，并随 v0.17.7 正式发布，官方 release 将我列为首次贡献者。',
     '这项贡献解决长时 Agent 沙箱中的缓冲增长、重复写入和网络超时落盘问题。',
@@ -1082,7 +1077,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 16, '产品判断基于 Jobs-to-be-Done；模型服务以用户授权与实际可用性为准')
+  addFooter(slide, 16)
   addNotes(slide, 16, '本地化用户价值', '40 秒', [
     '不做未经验证的比例判断；重点是许多普通用户从问答进入任务交付时，仍面对持续推进与产物验收的门槛。',
     'BAI Work 把上下文、工具、进度、产物和验证收进同一工作面，让用户获得可直接使用的成果。',
@@ -1139,7 +1134,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   metrics.forEach(function (metric, index) {
     addPill(slide, metric, 0.82 + index * 2.45, 6.35, 2.12, index % 2 ? C.greenSoft : C.blueSoft, index % 2 ? C.green : C.blue, 9.5)
   })
-  addFooter(slide, 17, '商业方案为待验证实验；额度、周期和风控阈值需按 Cohort 数据迭代')
+  addFooter(slide, 17)
   addNotes(slide, 17, '首批商业推广', '50 秒', [
     '建议采用限量、半价、封顶、限时的受控补贴方案，而不是无上限降价。',
     '优惠在用户绑定有效 API Key 并完成首个项目任务后激活，确保补贴对应真实使用。',
@@ -1176,7 +1171,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 18, '路线图优先级：稳定发布 → 真实激活 → 留存与单位经济')
+  addFooter(slide, 18)
   addNotes(slide, 18, '十二周路线图', '45 秒', [
     '前四周解决发布级稳定性，第二阶段验证首批 Cohort，第三阶段再决定规模化。',
     '每个阶段用发布质量、真实激活、留存和单位经济验收，而不是继续堆叠功能数量。'
