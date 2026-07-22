@@ -1131,10 +1131,10 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 18 Roadmap and demo
+// 18 Roadmap
 {
   const slide = baseSlide()
-  addHeader(slide, 18, '12 周推进：先稳定发布，再验证增长', '执行计划', C.teal, 'ROADMAP & LIVE DEMO')
+  addHeader(slide, 18, '12 周推进：先稳定发布，再验证增长', '执行计划', C.teal, '12-WEEK ROADMAP')
   const phases = [
     ['NOW', '稳定基线', 'Mac Intel 主版本\nToken Economy / EBAI\n当前自动化验证', C.slate, C.slateSoft],
     ['W1–4', '发布级', '正式签名与公证\n运行时契约对齐\n崩溃与恢复遥测', C.blue, C.blueSoft],
@@ -1154,40 +1154,16 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     })
     if (index < phases.length - 1) addLine(slide, x + 2.75, 3.16, 0.24, 0, C.muted, 1.2, 'triangle')
   })
-  addText(slide, '3 分钟现场证明', 0.82, 5.06, 1.5, 0.32, { fontSize: 14, color: C.teal, bold: true })
-  const demo = [
-    ['00:00–00:30', '输入 API Key，拉取模型'],
-    ['00:30–01:30', '发送项目任务，展示实时步骤'],
-    ['01:30–02:30', '打开产物、差异和验证结果'],
-    ['02:30–03:00', '展示 EBAI 安全边界与构建证据']
-  ]
-  demo.forEach(function (item, index) {
-    const x = 0.82 + index * 3.0
-    addRect(slide, x, 5.56, 2.68, 0.82, index === 3 ? C.greenSoft : C.white, index === 3 ? C.green : C.line, true)
-    addText(slide, item[0], x + 0.16, 5.7, 0.92, 0.28, {
-      fontFace: 'Aptos',
-      fontSize: 9.5,
-      color: index === 3 ? C.green : C.teal,
-      bold: true
-    })
-    addText(slide, item[1], x + 1.0, 5.66, 1.5, 0.42, {
-      fontSize: 10.5,
-      color: C.softInk,
-      bold: true,
-      align: 'center'
-    })
-  })
-  addText(slide, '每个阶段按行为指标验收，不以“新增多少功能”验收。', 1.4, 6.62, 10.55, 0.34, {
+  addText(slide, '12 周内只验证三件事：稳定发布、真实激活、单位经济成立。', 1.4, 5.45, 10.55, 0.42, {
     fontSize: 14.5,
     color: C.ink,
     bold: true,
     align: 'center'
   })
   addFooter(slide, 18, '路线图优先级：稳定发布 → 真实激活 → 留存与单位经济')
-  addNotes(slide, 18, '路线图与现场演示', '45 秒', [
+  addNotes(slide, 18, '十二周路线图', '45 秒', [
     '前四周解决发布级稳定性，第二阶段验证首批 Cohort，第三阶段再决定规模化。',
-    '现场演示严格控制三分钟，覆盖配置、过程、产物和安全边界。',
-    '每个阶段都用行为指标验收，而不是继续堆叠功能数量。'
+    '每个阶段用发布质量、真实激活、留存和单位经济验收，而不是继续堆叠功能数量。'
   ])
 }
 

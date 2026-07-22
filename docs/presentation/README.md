@@ -33,7 +33,7 @@ numeric judging scores:
 15. Cross-platform and test evidence
 16. Target users and market entry
 17. Controlled half-price launch experiment
-18. Twelve-week roadmap and three-minute demo playbook
+18. Twelve-week roadmap
 19. Evidence-based close
 
 Generate it from the project root with the bundled Codex presentation runtime:
