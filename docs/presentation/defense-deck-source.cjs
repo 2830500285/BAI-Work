@@ -1050,11 +1050,11 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
 // 16 Users
 {
   const slide = baseSlide()
-  addHeader(slide, 16, '目标用户：先占领高频、长链路的项目工作', '市场切入', C.coral, 'TARGET USERS')
+  addHeader(slide, 16, '本地化优势：普通用户也能用优质模型完成真实任务', '用户价值', C.coral, 'LOCAL USER VALUE')
   const users = [
-    ['个人开发者 / 研究者', '本地项目任务长、文件多、上下文重复传递。', '从问题到代码、文档和图表的一站式交付。', C.blueSoft, C.blue],
-    ['小型研发团队', '流程难复用，Agent 行为和权限口径难统一。', '共享技能、规则、服务配置与审阅标准。', C.tealSoft, C.teal],
-    ['BAI 生态用户', '底层执行能力缺少持续桌面入口与产物工作面。', '模型、运行时与生态能力进入日常项目流程。', C.coralSoft, C.coral]
+    ['从聊天到交付', '不少 AI 使用仍停在问答，长任务难以持续推进。', '任务过程进入同一工作面，直接交付可用成果。', C.blueSoft, C.blue],
+    ['统一模型入口', '配置、探测和选模型门槛高，普通用户难以稳定使用。', 'BAI 统一入口：Claude、GPT 等模型即配即用。', C.tealSoft, C.teal],
+    ['普通用户也能完成', '非开发者更依赖默认可用、过程清晰的产品路径。', '配置极简、过程可见，最终获得可验证产物。', C.coralSoft, C.coral]
   ]
   users.forEach(function (item, index) {
     const x = 0.72 + index * 4.03
@@ -1076,17 +1076,18 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     addText(slide, 'BAI Work 价值', x + 0.24, 4.62, 1.4, 0.28, { fontSize: 11, color: item[4], bold: true })
     addText(slide, item[2], x + 0.24, 4.98, 3.14, 0.55, { fontSize: 13.5, color: C.ink, bold: true, valign: 'top' })
   })
-  addText(slide, '首批验证不追求覆盖所有 AI 用户，而聚焦已有本地项目、愿意把完整任务交给 Agent 的用户。', 1.0, 6.24, 11.3, 0.42, {
+  addText(slide, '不是把聊天窗口搬到桌面，而是把优质模型变成普通用户能完成任务的工作台。', 1.0, 6.24, 11.3, 0.42, {
     fontSize: 15.5,
     color: C.coral,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 16, '市场判断基于 Jobs-to-be-Done；不使用未经验证的市场规模数字')
-  addNotes(slide, 16, '目标用户', '35 秒', [
-    '首批用户是有真实本地项目、长任务和产物验收需求的个人与小团队。',
-    'BAI 生态用户获得的是持续桌面入口和项目交付工作面。',
-    '切入策略先验证高频留存与任务完成率，再扩展更广泛场景。'
+  addFooter(slide, 16, '产品判断基于 Jobs-to-be-Done；模型服务以用户授权与实际可用性为准')
+  addNotes(slide, 16, '本地化用户价值', '40 秒', [
+    '不做未经验证的比例判断；重点是许多普通用户从问答进入任务交付时，仍面对持续推进与产物验收的门槛。',
+    'BAI Work 把上下文、工具、进度、产物和验证收进同一工作面，让用户获得可直接使用的成果。',
+    '当前 BAI provider preset 包含 Claude 与 GPT 系列模型；用户通过已获授权的 API Key 使用，具体能力以实际可用性和相关条款为准。',
+    '强调这是通过 BAI 统一入口使用模型能力，不代表 OpenAI 或 Anthropic 的官方合作或背书，也不改变相关服务限制。'
   ])
 }
 

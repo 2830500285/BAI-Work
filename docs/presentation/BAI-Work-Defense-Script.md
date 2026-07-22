@@ -96,11 +96,12 @@
 - GPT-5.6 ChatGPT Codex 用于本次贡献流程的协作与复核；公开仓库只证明 PR 合并与版本发布，因此不宣称 Codex 产品直接集成这段代码。
 - 公开来源：https://github.com/openai/openai-agents-python/pull/3642 · https://github.com/openai/openai-agents-python/releases/tag/v0.17.7 · https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt
 
-## 16. 目标用户（35 秒）
+## 16. 本地化用户价值（40 秒）
 
-- 首批用户是有真实本地项目、长任务和产物验收需求的个人与小团队。
-- BAI 生态用户获得的是持续桌面入口和项目交付工作面。
-- 切入策略先验证高频留存与任务完成率，再扩展更广泛场景。
+- 不做未经验证的比例判断；重点是许多普通用户从问答进入任务交付时，仍面对持续推进与产物验收的门槛。
+- BAI Work 把上下文、工具、进度、产物和验证收进同一工作面，让用户获得可直接使用的成果。
+- 当前 BAI provider preset 包含 Claude 与 GPT 系列模型；用户通过已获授权的 API Key 使用，具体能力以实际可用性和相关条款为准。
+- 强调这是通过 BAI 统一入口使用模型能力，不代表 OpenAI 或 Anthropic 的官方合作或背书，也不改变相关服务限制。
 
 ## 17. 首批商业推广（50 秒）
 
