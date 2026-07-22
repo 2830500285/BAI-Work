@@ -59,6 +59,7 @@ Last checked on 2026-07-22:
   comparisons from visible slide content.
 - The full Vitest baseline passed: 168 test files and 1,144 tests.
 - Slide 15 cites OpenAI Agents SDK PR #3642 and the official v0.17.7 release. It distinguishes a shared reliability principle from direct code reuse, and treats GPT-5.6 Codex participation as the contributor's development record rather than a claim that Codex embeds the PR code.
+- Slide 15 sources: [OpenAI Agents SDK PR #3642](https://github.com/openai/openai-agents-python/pull/3642), [v0.17.7 release](https://github.com/openai/openai-agents-python/releases/tag/v0.17.7), and [OpenAI's GPT-5.6 availability note for Codex](https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt).
 - The Token Economy pages use only current settings, schema, normalizer, and
   telemetry behavior; unsupported formulas and claimed savings percentages are
   not shown.

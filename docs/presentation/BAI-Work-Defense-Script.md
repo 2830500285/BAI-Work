@@ -94,6 +94,7 @@
 - 这项贡献解决长时 Agent 沙箱中的缓冲增长、重复写入和网络超时落盘问题。
 - BAI Work 没有移植该段 Python 代码，而是在 Runtime Host 中独立落实同一工程原则：pending 有界、事件游标去重、SSE 断点续传、指数退避与熔断。
 - GPT-5.6 ChatGPT Codex 用于本次贡献流程的协作与复核；公开仓库只证明 PR 合并与版本发布，因此不宣称 Codex 产品直接集成这段代码。
+- 公开来源：https://github.com/openai/openai-agents-python/pull/3642 · https://github.com/openai/openai-agents-python/releases/tag/v0.17.7 · https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt
 
 ## 16. 目标用户（35 秒）
 

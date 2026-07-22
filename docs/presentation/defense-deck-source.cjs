@@ -1029,7 +1029,8 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     '我以 @2830500285 身份向 OpenAI Agents SDK 贡献 PR #3642，并随 v0.17.7 正式发布，官方 release 将我列为首次贡献者。',
     '这项贡献解决长时 Agent 沙箱中的缓冲增长、重复写入和网络超时落盘问题。',
     'BAI Work 没有移植该段 Python 代码，而是在 Runtime Host 中独立落实同一工程原则：pending 有界、事件游标去重、SSE 断点续传、指数退避与熔断。',
-    'GPT-5.6 ChatGPT Codex 用于本次贡献流程的协作与复核；公开仓库只证明 PR 合并与版本发布，因此不宣称 Codex 产品直接集成这段代码。'
+    'GPT-5.6 ChatGPT Codex 用于本次贡献流程的协作与复核；公开仓库只证明 PR 合并与版本发布，因此不宣称 Codex 产品直接集成这段代码。',
+    '公开来源：https://github.com/openai/openai-agents-python/pull/3642 · https://github.com/openai/openai-agents-python/releases/tag/v0.17.7 · https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt'
   ])
 }
 
@@ -1108,7 +1109,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addBulletList(slide, [
     '绑定有效 API Key 并完成首个项目任务后激活优惠。',
     '按账户、设备与异常使用信号控制重复领取。',
-    '补贴只覆盖真实使用量，未使用额度不沉淀、不转售。'
+    '补贴只覆盖真实使用量，未使用额度不沉淀、不转售'
   ], 3.55, 4.42, 3.95, 0.43, C.softInk, 11.5, C.green)
   addRect(slide, 8.25, 4.25, 4.35, 1.65, C.slate, C.slate, true)
   addText(slide, '单位经济门槛', 8.58, 4.52, 3.7, 0.34, { fontSize: 15, color: '8FD4CF', bold: true, align: 'center' })
