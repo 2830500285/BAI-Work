@@ -788,47 +788,60 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   const slide = baseSlide(C.paper)
   addHeader(slide, 11, 'EBAI：BAI Work 面向用户的能力体系', '产品能力层', C.coral, 'EBAI PRODUCT CAPABILITY SYSTEM')
   const capabilities = [
-    ['EBAI', '能力随应用呈现\n统一产品身份', C.slateSoft, C.slate],
     ['Commands', '项目命令\n运行时可加载', C.redSoft, C.red],
     ['Agents', '专业角色\n以命令工作流接入', C.blueSoft, C.blue],
     ['Skills', '任务方法\n运行时可加载', C.tealSoft, C.teal],
     ['Rules', '行为约束\n以 Skill 指令接入', C.amberSoft, C.amber],
     ['Hooks', '自动化契约\nManifest 已生成', C.greenSoft, C.green]
   ]
+  addRect(slide, 0.72, 1.72, 11.88, 0.7, C.slateSoft, C.slateSoft, true)
+  addText(slide, 'EBAI', 0.98, 1.9, 1.2, 0.34, {
+    fontFace: 'Aptos',
+    fontSize: 13,
+    color: C.slate,
+    bold: true,
+    align: 'center'
+  })
+  addText(slide, '能力随应用呈现\n统一产品身份', 2.28, 1.8, 9.92, 0.48, {
+    fontSize: 10.5,
+    color: C.softInk,
+    align: 'center',
+    breakLine: true
+  })
   capabilities.forEach(function (item, index) {
-    const x = 0.55 + index * 2.08
-    addRect(slide, x, 1.98, 1.7, 1.62, item[2], item[2], true)
-    addText(slide, item[0], x + 0.1, 2.22, 1.5, 0.34, {
+    const x = 0.72 + index * 2.424
+    addRect(slide, x, 2.64, 2.184, 1.38, item[2], item[2], true)
+    addText(slide, item[0], x + 0.12, 2.87, 1.944, 0.34, {
       fontFace: 'Aptos',
       fontSize: 13,
       color: item[3],
       bold: true,
       align: 'center'
     })
-    addText(slide, item[1], x + 0.12, 2.78, 1.46, 0.56, {
+    addText(slide, item[1], x + 0.16, 3.31, 1.864, 0.56, {
       fontSize: 10.5,
       color: C.softInk,
       align: 'center',
       breakLine: true
     })
   })
-  addRect(slide, 0.72, 4.15, 5.7, 1.7, C.white, C.line, true)
-  addText(slide, '用户可用能力', 0.98, 4.44, 1.0, 0.3, { fontSize: 14, color: C.coral, bold: true })
+  addRect(slide, 0.72, 4.26, 5.7, 1.64, C.white, C.line, true)
+  addText(slide, '用户可用能力', 0.98, 4.45, 2.0, 0.32, { fontSize: 14, color: C.coral, bold: true })
   addBulletList(slide, [
     '命令、技能与规则进入任务上下文',
     'Agent 以专业命令工作流对用户呈现',
     'Hooks 保留能力定义，执行契约待 Runtime 支持'
-  ], 2.05, 4.36, 4.0, 0.43, C.softInk, 11.5, C.coral)
-  addRect(slide, 6.72, 4.15, 5.88, 1.7, C.slate, C.slate, true)
-  addText(slide, '当前状态', 7.02, 4.44, 1.0, 0.3, { fontSize: 14, color: '8FD4CF', bold: true })
-  addText(slide, 'Commands · Skills：安装后可加载\nAgents：命令化接入\nRules：Skill 化接入\nHooks：默认关闭', 8.3, 4.32, 3.92, 1.12, {
+  ], 1.02, 4.8, 5.05, 0.36, C.softInk, 11.5, C.coral)
+  addRect(slide, 6.72, 4.26, 5.88, 1.64, C.slate, C.slate, true)
+  addText(slide, '当前状态', 7.02, 4.45, 2.0, 0.32, { fontSize: 14, color: '8FD4CF', bold: true })
+  addText(slide, 'Commands · Skills：安装后可加载\nAgents：命令化接入\nRules：Skill 化接入\nHooks：默认关闭', 7.02, 4.82, 5.15, 0.95, {
     fontFace: 'Aptos',
     fontSize: 13,
     color: C.white,
     breakLine: true,
     valign: 'top'
   })
-  addText(slide, '这些能力就是 BAI Work 的产品能力；来源与安装只属于内部交付方式。', 1.22, 6.34, 10.9, 0.42, {
+  addText(slide, '这些能力就是 BAI Work 的产品能力；来源与安装只属于内部交付方式。', 1.22, 6.25, 10.9, 0.42, {
     fontSize: 16,
     color: C.ink,
     bold: true,
