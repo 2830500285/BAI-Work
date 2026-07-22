@@ -4,7 +4,7 @@ This folder contains the BAI Work project presentation.
 
 ## Files
 
-- `BAI-Work-Defense-Deck.pptx`: 19-slide Chinese hackathon defense deck centered on lightweight project architecture, Token Economy, EBAI, product simplicity, and commercial validation.
+- `BAI-Work-Defense-Deck.pptx`: 19-slide Chinese hackathon defense deck centered on a lightweight project architecture, verifiable context-budget controls, EBAI, engineering evidence, and commercial validation.
 - `BAI-Work-Defense-Script.md`: slide-by-slide timing, delivery notes, and the three-minute live-demo playbook.
 - `defense-deck-source.cjs`: PptxGenJS source for the defense deck.
 - `BAI-Work-Project-Deck.pptx`: final PowerPoint deck.
@@ -22,14 +22,14 @@ numeric judging scores:
 4. Live product demo story
 5. Product completeness
 6. Lightweight Runtime Host architecture
-7. Project-level differentiation from BAI-Claw
+7. Project-level Runtime Host control boundary and delivery data plane
 8. Observable long-running task state machine
-9. Token Economy occupancy-ratio gating
-10. Three-layer context-reduction algorithm
+9. Token Economy request-budget control surface
+10. History-hygiene and context-compaction configuration contract
 11. EBAI source, cache, and semantic mapping pipeline
 12. EBAI project-scoped hook safety
 13. Full AI agent loop
-14. BAI Work / BAI-Claw / BAI Code positioning matrix
+14. End-to-end BAI Work engineering evidence chain
 15. Cross-platform and test evidence
 16. Target users and market entry
 17. Controlled half-price launch experiment
@@ -46,17 +46,21 @@ NODE_PATH=/Users/mac/.cache/codex-runtimes/codex-primary-runtime/dependencies/no
 
 ## Defense Deck Validation
 
-Last checked on 2026-07-11:
+Last checked on 2026-07-21:
 
 - Source generation passed and produced 19 slides.
 - The PPTX archive passed `unzip -t` with no compressed-data errors.
 - The archive contains 19 slide XML files and 19 speaker-note XML files.
 - LibreOffice converted the deck to a 19-page PDF without errors.
-- All pages were reviewed as a montage; the architecture comparison, Token
-  Economy, EBAI, positioning, commercial launch, and roadmap slides were also
-  checked individually at full resolution.
-- The deck intentionally omits numeric judging-score chips and third-party
-  product branding from visible slide content.
+- All pages were reviewed as a montage; the Runtime Host, context-budget,
+  EBAI, evidence-chain, commercial launch, and roadmap slides were also checked
+  individually at full resolution.
+- The deck intentionally omits numeric judging-score chips and external product
+  comparisons from visible slide content.
+- The full Vitest baseline passed: 168 test files and 1,144 tests.
+- The Token Economy pages use only current settings, schema, normalizer, and
+  telemetry behavior; unsupported formulas and claimed savings percentages are
+  not shown.
 - No API key, token, or credential value is included.
 
 ## Deck Structure

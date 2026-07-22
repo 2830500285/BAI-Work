@@ -274,7 +274,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     color: 'C5CDD4'
   })
   const tags = [
-    ['30 秒配置', C.teal],
+    ['30 秒路径', C.teal],
     ['单项目执行', C.blue],
     ['Token Economy', C.amber],
     ['EBAI', C.coral],
@@ -361,8 +361,8 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
 // 03 Thirty-second setup
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 3, '30 秒配置路径：API Key 进入，模型能力自动就绪', '极简上手', C.green, 'THIRTY-SECOND ONBOARDING')
-  addPill(slide, '典型路径', 0.72, 1.7, 1.08, C.greenSoft, C.green, 10)
+  addHeader(slide, 3, '30 秒演示目标：API Key 进入，模型能力自动就绪', '极简上手', C.green, 'THIRTY-SECOND ONBOARDING')
+  addPill(slide, '现场路径', 0.72, 1.7, 1.08, C.greenSoft, C.green, 10)
   const steps = [
     ['输入 API Key', 'Main-Process Credential Isolation'],
     ['探测服务', 'Endpoint Canonicalization'],
@@ -373,7 +373,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   steps.forEach(function (item, index) {
     const x = 0.72 + index * 2.48
     addRect(slide, x, 2.24, 2.06, 1.52, index === 4 ? C.greenSoft : C.white, index === 4 ? C.green : C.line, true)
-    addText(slide, index === 0 ? '0s' : String(index * 6) + 's', x + 0.16, 2.43, 0.45, 0.28, {
+    addText(slide, String(index + 1).padStart(2, '0'), x + 0.16, 2.43, 0.45, 0.28, {
       fontFace: 'Aptos',
       fontSize: 10,
       color: index === 4 ? C.green : C.teal,
@@ -415,10 +415,10 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     align: 'center'
   })
   addFooter(slide, 3, '实现证据：provider connection · model discovery · protocol URL normalization')
-  addNotes(slide, 3, '30 秒配置路径', '45 秒', [
+  addNotes(slide, 3, '30 秒演示目标', '45 秒', [
     '用户只需提供 API Key，主进程完成服务探测、模型拉取、能力分类和保存。',
     '技术上使用凭据隔离、端点规范化、能力感知发现与幂等集合合并。',
-    '强调“简单”不是隐藏能力，而是把配置复杂度吸收到产品内部。'
+    '30 秒是顺畅网络下的现场演示目标，不作为固定网络 SLA。'
   ])
 }
 
@@ -490,15 +490,15 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   })
   addRect(slide, 0.72, 5.05, 11.88, 1.42, C.white, C.line, true)
   addMetric(slide, '3', '桌面目标', 0.98, 5.28, 1.8, C.blue, 'mac-x64 / mac-arm64 / win-x64')
-  addMetric(slide, '8', '本地运行时路由', 3.3, 5.28, 1.8, C.teal, '稳定的桌面服务边界')
-  addMetric(slide, '277', '可迁移技能', 5.62, 5.28, 1.8, C.amber, 'EBAI 可映射 surface')
-  addMetric(slide, '101', '去重命令', 7.94, 5.28, 1.8, C.coral, '面向斜杠命令入口')
+  addMetric(slide, '168', '测试文件', 3.3, 5.28, 1.8, C.teal, 'main / runtime / renderer')
+  addMetric(slide, '/v1/*', '本地服务边界', 5.62, 5.28, 1.8, C.amber, '稳定桌面接口')
+  addMetric(slide, 'EBAI', '能力映射', 7.94, 5.28, 1.8, C.coral, '安装与启用分离')
   addMetric(slide, '1', '连续工作流', 10.26, 5.28, 1.8, C.green, '任务到产物再到复用')
   addFooter(slide, 5, '当前实现证据：README · runtime adapter · EBAI mapping tests')
   addNotes(slide, 5, '产品完成度', '40 秒', [
     '完成度从用户生命周期衡量：配置、执行、观察、审阅、沉淀都在一个工作面完成。',
     '三平台目标和稳定本地服务边界证明它不是一次性原型。',
-    'EBAI 的数量只表示可迁移 surface，实际安装仍受安全策略与用户选择约束。'
+    'EBAI 强调安装、映射与启用的安全边界，不用无法离线复现的资源数量包装完成度。'
   ])
 }
 
@@ -559,46 +559,46 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 07 BAI-Claw differentiation
+// 07 Project-level Runtime Host data plane
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 7, '主要差异化：为项目交付重新选择架构目标函数', '架构差异化', C.coral, 'BAI WORK VS BAI-CLAW')
-  addText(slide, '比较的不是功能多少，而是架构是否匹配目标任务。', 1.1, 1.66, 11.1, 0.42, {
+  addHeader(slide, 7, '架构选择：把复杂度收敛到项目级 Runtime Host', '架构优势', C.coral, 'RUNTIME DESIGN')
+  addText(slide, '系统复杂度集中处理，交付证据持续回到当前项目。', 1.1, 1.66, 11.1, 0.42, {
     fontSize: 18,
     color: C.softInk,
     bold: true,
     align: 'center'
   })
   addRect(slide, 0.72, 2.22, 5.72, 3.82, C.slateSoft, C.slateSoft, true)
-  addText(slide, 'BAI-Claw', 1.0, 2.5, 2.0, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.slate, bold: true })
-  addPill(slide, '通用个人 Agent', 4.38, 2.53, 1.62, C.slate, C.white, 10)
+  addText(slide, '控制边界', 1.0, 2.5, 2.0, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.slate, bold: true })
+  addPill(slide, 'Runtime Host', 4.38, 2.53, 1.62, C.slate, C.white, 10)
   addBulletList(slide, [
-    '多 Agent、外部通信通道与定时任务并列编排',
-    '全局 Agent、Channel、Skill 与 Scheduler 状态',
-    '面向跨入口通信和持续自动化的广覆盖目标',
-    '在单项目交付场景中存在额外组件与状态域'
+    '凭据、协议、文件访问和生命周期集中在主进程',
+    '上游变化只进入适配层，不扩散到工作台界面',
+    '本机回环服务与稳定 /v1/* 构成清晰边界',
+    '错误清洗、重试和事件归一化共享同一入口'
   ], 1.0, 3.12, 4.95, 0.6, C.softInk, 13, C.slate)
   addRect(slide, 6.88, 2.22, 5.72, 3.82, C.tealSoft, C.tealSoft, true)
-  addText(slide, 'BAI Work', 7.18, 2.5, 2.1, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.teal, bold: true })
-  addPill(slide, '项目级工作台', 10.5, 2.53, 1.62, C.teal, C.white, 10)
+  addText(slide, '交付数据面', 7.18, 2.5, 2.1, 0.42, { fontFace: 'Aptos Display', fontSize: 22, color: C.teal, bold: true })
+  addPill(slide, 'Workspace', 10.5, 2.53, 1.62, C.teal, C.white, 10)
   addBulletList(slide, [
-    'Workspace → Runtime Host → BAI Code 的短路径',
-    '状态、权限、产物与记忆围绕当前项目收敛',
-    '面向交互式工程与知识产物的闭环目标',
-    '更少网关跳数、更小故障域、更直接验收'
+    '上下文、任务状态、权限与记忆围绕项目收敛',
+    '工具动作、等待、错误与完成进入统一时间线',
+    '回答、文件、差异、截图与报告分区呈现',
+    '文件、测试、构建和运行证据共同完成验收'
   ], 7.18, 3.12, 4.95, 0.6, C.softInk, 13, C.teal)
   addRect(slide, 1.25, 6.32, 10.83, 0.52, C.coralSoft, C.coralSoft, true)
-  addText(slide, '项目级任务中的架构优势：路径更短 → Failure Boundary 更少 → 进度更清晰 → 产物更快进入验收', 1.48, 6.4, 10.37, 0.32, {
+  addText(slide, 'Workspace Context → Runtime Host → Event Stream → Deliverables → Verification', 1.48, 6.4, 10.37, 0.32, {
     fontSize: 13,
     color: C.coral,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 7, '官方定位依据：docs.b.ai/baiclaw/introduction · 项目架构依据：BAI Work runtime host')
-  addNotes(slide, 7, '与 BAI-Claw 的架构差异', '60 秒', [
-    'BAI-Claw 官方定位强调多 Agent、多通道与 7×24 调度，适合广覆盖的个人智能体场景。',
-    'BAI Work 的目标函数不同：围绕当前项目、当前用户和可验收产物收敛状态。',
-    '因此我们主张的是项目级任务中的架构优势，不做脱离场景的绝对优劣判断。'
+  addFooter(slide, 7, '实现依据：runtime host · streaming adapter · project-scoped state')
+  addNotes(slide, 7, '项目级 Runtime Host 数据链', '55 秒', [
+    '这一页只解释 BAI Work 自身的架构选择：把桌面复杂度集中在 Runtime Host。',
+    '工作台只消费稳定事件，项目上下文、状态、权限和产物则始终围绕 workspace 收敛。',
+    '从输入到验收的每一段都有明确边界，因此长任务可以被观察、恢复和验证。'
   ])
 }
 
@@ -658,20 +658,20 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 09 Token Economy overview
+// 09 Token Economy control surface
 {
   const slide = baseSlide(C.paper)
-  addHeader(slide, 9, 'Token Economy：用占用率门控替代无差别压缩', '上下文算法', C.amber, 'TOKEN ECONOMY')
+  addHeader(slide, 9, 'Token Economy：先建立可配置预算，再谈节省', '上下文控制面', C.amber, 'CONTEXT BUDGET CONTROL')
   addRect(slide, 0.72, 1.82, 4.35, 2.28, C.slate, C.slate, true)
-  addText(slide, '线性近似 Token 估计器', 1.02, 2.12, 3.75, 0.38, { fontSize: 16, color: 'F2BE73', bold: true, align: 'center' })
-  addText(slide, 'T̂ = floor(|C| / 3)', 1.02, 2.74, 3.75, 0.58, {
+  addText(slide, '请求预算 ≠ 删除聊天记录', 1.02, 2.12, 3.75, 0.38, { fontSize: 16, color: 'F2BE73', bold: true, align: 'center' })
+  addText(slide, '本次请求受限', 1.02, 2.74, 3.75, 0.58, {
     fontFace: 'Aptos Display',
-    fontSize: 28,
+    fontSize: 27,
     color: C.white,
     bold: true,
     align: 'center'
   })
-  addText(slide, 'ρ = T̂ / T_max', 1.02, 3.42, 3.75, 0.38, {
+  addText(slide, '原始历史保留', 1.02, 3.42, 3.75, 0.38, {
     fontFace: 'Aptos',
     fontSize: 18,
     color: 'C8D1D8',
@@ -679,16 +679,16 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     align: 'center'
   })
   addRect(slide, 5.42, 1.82, 7.18, 2.28, C.white, C.line, true)
-  addText(slide, 'Occupancy-Ratio Threshold Gating', 5.72, 2.12, 6.58, 0.38, {
+  addText(slide, 'History Hygiene 默认预算', 5.72, 2.12, 6.58, 0.38, {
     fontFace: 'Aptos',
     fontSize: 16,
     color: C.amber,
     bold: true
   })
   const gates = [
-    ['ρ > 0.50', '工具输出裁剪', C.teal],
-    ['ρ > 0.70', '语义摘要压缩', C.amber],
-    ['ρ > 0.90', '紧急上下文收敛', C.coral]
+    ['320 行', '单次工具结果', C.teal],
+    ['32 KiB', '结果字节预算', C.amber],
+    ['8K tokens', '结果 Token 预算', C.coral]
   ]
   gates.forEach(function (item, index) {
     const x = 5.72 + index * 2.08
@@ -696,55 +696,55 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     addText(slide, item[1], x, 3.28, 1.68, 0.34, { fontSize: 12, color: C.ink, bold: true, align: 'center' })
   })
   addRect(slide, 0.72, 4.55, 11.88, 1.48, C.amberSoft, C.amberSoft, true)
-  addText(slide, '算法目标', 0.98, 4.84, 1.15, 0.32, { fontSize: 14, color: C.amber, bold: true })
+  addText(slide, '控制契约', 0.98, 4.84, 1.15, 0.32, { fontSize: 14, color: C.amber, bold: true })
   addBulletList(slide, [
-    'O(n) 单次扫描估计上下文占用，避免每轮都触发高成本精确计数。',
-    '只在阈值越界时激活相应压缩层，低占用对话保持原始信息。',
-    '优先保留最新窗口、任务约束和可验证结果，降低重复历史回传。'
+    '工具参数字符串默认 8 KiB / 2K tokens，数组默认最多 80 项。',
+    '共享类型、IPC schema 与 normalizer 共同限制非法或失控配置。',
+    '设置层保留压缩工具描述、工具结果和简洁回答的独立开关。'
   ], 2.15, 4.76, 9.85, 0.42, C.softInk, 12, C.amber)
-  addText(slide, '这不是“删得更多”，而是按上下文风险分级选择最小必要压缩。', 1.42, 6.4, 10.5, 0.38, {
+  addText(slide, '遥测不可用时明确显示 unavailable，不把缺失数据包装成“节省 0%”。', 1.42, 6.4, 10.5, 0.38, {
     fontSize: 16,
     color: C.ink,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 9, '运行时算法证据：BAI Code context manager · 官方支持 automatic context compression')
-  addNotes(slide, 9, 'Token Economy 总体算法', '55 秒', [
-    '先用线性近似估计器得到上下文占用率，再通过三级阈值门控选择压缩策略。',
-    '这种设计避免低占用对话被过度压缩，同时在接近上限时快速收敛。',
-    '核心价值是减少重复上下文回传，并优先保护最近任务窗口与验收证据。'
+  addFooter(slide, 9, '实现证据：app settings · IPC schema · normalizer · usage telemetry guards')
+  addNotes(slide, 9, 'Token Economy 控制面', '50 秒', [
+    '这里展示的是当前代码中可复现的请求预算配置，不使用仓库里不存在的估算公式。',
+    '历史保护限制发送请求时的超长工具结果和参数，原始聊天记录保持不变。',
+    '当前适配层没有可用的节省遥测，因此界面明确显示不可用，不宣称节省百分比。'
   ])
 }
 
-// 10 Token Economy layers
+// 10 Context governance contract
 {
   const slide = baseSlide()
-  addHeader(slide, 10, '三层压缩算法：从结构裁剪到语义收敛', '算法细节', C.amber, 'TOKEN REDUCTION PIPELINE')
+  addHeader(slide, 10, '双层上下文治理：历史卫生 + 压缩配置契约', '控制参数', C.amber, 'CONTEXT GOVERNANCE')
   const layers = [
     {
       label: 'L1',
-      title: 'Role-Aware Head–Tail Truncation',
-      condition: '工具消息 > 1,500 字符且 > 6 行',
-      action: '仅处理 tool role；保留首 3 行 + 尾 3 行，并插入省略行数。',
-      result: '先消除高冗余命令输出',
+      title: 'History Hygiene / 工具结果预算',
+      condition: '默认：320 行 · 32 KiB · 8K tokens',
+      action: '定义工具结果上限；原始聊天记录保持不变。',
+      result: '控制输入放大',
       fill: C.tealSoft,
       accent: C.teal
     },
     {
       label: 'L2',
-      title: 'Recent-Window Semantic Compaction',
-      condition: 'ρ > 0.70 且消息数 > 10',
-      action: '旧消息进入语义摘要；最近 8 条消息保持原文，摘要失败时降级提取。',
-      result: '保护近期意图与执行连续性',
+      title: 'Tool Argument Guard / 工具参数预算',
+      condition: '默认：8 KiB · 2K tokens · 80 项',
+      action: '约束长字符串与数组展开；输入边界由 schema 和 normalizer 校验。',
+      result: '降低结构冗余',
       fill: C.amberSoft,
       accent: C.amber
     },
     {
       label: 'L3',
-      title: 'Emergency Hard Collapse',
-      condition: 'ρ > 0.90 且消息数 > 4',
-      action: '保留摘要与最近 4 条消息；极小列表保留最近 2 条。',
-      result: '在硬上限前恢复可生成空间',
+      title: 'Context Compaction / 摘要配置契约',
+      condition: '默认：软阈值 16K · 硬阈值 24K',
+      action: '启发式摘要；15 秒超时；摘要上限 1,200 tokens；输入 96 KiB。',
+      result: '为运行时留出空间',
       fill: C.coralSoft,
       accent: C.coral
     }
@@ -769,17 +769,17 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     })
   })
   addRect(slide, 0.72, 6.42, 11.88, 0.4, C.slateSoft, C.slateSoft, true)
-  addText(slide, '运行时同时保留手动 compact 入口；自动策略负责守住上下文上限，用户仍可主动控制压缩时机。', 0.98, 6.48, 11.35, 0.24, {
+  addText(slide, '证据边界：这是可配置控制面与压缩配置契约；实际节省量只在后端提供遥测时展示。', 0.98, 6.48, 11.35, 0.24, {
     fontSize: 11.5,
     color: C.slate,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 10, '阈值与窗口大小来自当前 packaged BAI Code runtime；不宣称未经测量的节省比例')
-  addNotes(slide, 10, 'Token Economy 三层算法', '60 秒', [
-    '第一层只裁剪高冗余工具输出；第二层摘要旧历史并保留最近八条；第三层在硬上限前紧急收敛。',
-    '每层都保持任务最近窗口和可验证结果，避免把“降 Token”做成无差别删减。',
-    '我们不使用未经实测的百分比，而是展示可复现的阈值、窗口和回退路径。'
+  addFooter(slide, 10, '实现证据：history hygiene defaults · compaction settings · validation bounds')
+  addNotes(slide, 10, '上下文治理契约', '55 秒', [
+    '第一层约束工具结果，第二层约束工具参数，第三层定义摘要阈值与资源预算。',
+    '这些默认值和输入上限都能从共享设置、IPC schema 与 normalizer 中复现。',
+    '我们把控制面和实际运行效果分开陈述；只有可用遥测才进入节省展示。'
   ])
 }
 
@@ -933,15 +933,15 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   ])
 }
 
-// 14 Competitive matrix
+// 14 End-to-end evidence chain
 {
   const slide = baseSlide()
-  addHeader(slide, 14, '竞争定位：BAI Work 连接模型能力与项目交付', '竞争优势', C.coral, 'POSITIONING MATRIX')
+  addHeader(slide, 14, '交付闭环：从输入到验收，每一步都有工程证据', '综合证据', C.coral, 'BAI WORK EVIDENCE CHAIN')
   const cols = [
-    ['比较维度', 0.72, 2.22, C.slate],
-    ['BAI Work', 2.94, 3.2, C.teal],
-    ['BAI-Claw', 6.2, 3.0, C.coral],
-    ['BAI Code', 9.24, 3.36, C.blue]
+    ['交付阶段', 0.72, 2.22, C.slate],
+    ['用户价值', 2.94, 3.2, C.teal],
+    ['系统机制', 6.2, 3.0, C.coral],
+    ['可验证证据', 9.24, 3.36, C.blue]
   ]
   cols.forEach(function (item) {
     addRect(slide, item[1], 1.82, item[2], 0.54, item[3], item[3], true)
@@ -953,34 +953,34 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
     })
   })
   const rows = [
-    ['核心定位', '项目级桌面工作台', '通用个人 Agent', '命令行执行引擎'],
-    ['状态作用域', 'Workspace / Project', 'Agent / Channel / Global', 'Session / Process'],
-    ['主路径', '任务 → 进度 → 产物 → 验证', '消息 → 编排 → 自动化', '指令 → 工具 → 输出'],
-    ['架构重点', '短链路与最小故障域', '广覆盖与持续运行', '执行能力与上下文'],
-    ['交付形态', '文件、差异、测试、摘要', '会话与自动化结果', '终端输出与会话'],
-    ['产品关系', '面向最终用户的交付层', '主要差异化对象', 'BAI Work 底层能力']
+    ['配置进入', '完成服务与模型就绪', '凭据隔离 · 探测 · 能力发现', '连接与模型发现测试'],
+    ['任务执行', '项目内发起并持续看见推进', 'Runtime Host · SSE 归一化', '适配器与流式事件测试'],
+    ['上下文经济', '请求预算与摘要边界可配置', '历史卫生 · 压缩配置契约', '默认值与输入边界测试'],
+    ['能力复用', '安装、映射与启用彼此分离', 'EBAI 索引 · 安全门 · 项目 Hook', '映射与 Hook 安全测试'],
+    ['产物交付', '回答、文件、差异与摘要分区', '结果区与项目文件联动', '文件存在性与差异证据'],
+    ['工程验收', '从代码验证到桌面包体', '类型检查 · 测试 · 构建 · 打包', '自动化测试与运行 smoke']
   ]
   rows.forEach(function (row, index) {
     const y = 2.52 + index * 0.64
     const fill = index % 2 === 0 ? C.white : C.bg
     addRect(slide, 0.72, y, 11.88, 0.58, fill, C.line)
-    addText(slide, row[0], 0.9, y + 0.1, 1.86, 0.32, { fontSize: 11.5, color: C.slate, bold: true })
-    addText(slide, row[1], 3.08, y + 0.1, 2.88, 0.32, { fontSize: 11.5, color: C.teal, bold: true, align: 'center' })
-    addText(slide, row[2], 6.38, y + 0.1, 2.62, 0.32, { fontSize: 11.5, color: C.coral, align: 'center' })
-    addText(slide, row[3], 9.42, y + 0.1, 2.98, 0.32, { fontSize: 11.5, color: C.blue, align: 'center' })
+    addText(slide, row[0], 0.9, y + 0.1, 1.86, 0.32, { fontSize: 11, color: C.slate, bold: true })
+    addText(slide, row[1], 3.08, y + 0.1, 2.88, 0.32, { fontSize: 10.5, color: C.teal, bold: true, align: 'center' })
+    addText(slide, row[2], 6.38, y + 0.1, 2.62, 0.32, { fontSize: 10.5, color: C.coral, align: 'center' })
+    addText(slide, row[3], 9.42, y + 0.1, 2.98, 0.32, { fontSize: 10.5, color: C.blue, align: 'center' })
   })
   addRect(slide, 1.1, 6.52, 11.12, 0.38, C.coralSoft, C.coralSoft, true)
-  addText(slide, '结论：BAI-Claw 是主要差异化对象；BAI Code 是被 BAI Work 产品化、可视化和工程化的底层执行能力。', 1.32, 6.57, 10.68, 0.26, {
+  addText(slide, '上手、执行、上下文、安全、交付、验收——每个价值点都能回到实现与现场证据。', 1.32, 6.57, 10.68, 0.26, {
     fontSize: 11.5,
     color: C.coral,
     bold: true,
     align: 'center'
   })
-  addFooter(slide, 14, '定位依据：BAI 官方产品文档 · BAI Work 当前实现')
-  addNotes(slide, 14, '竞争定位矩阵', '55 秒', [
-    'BAI-Claw 是主要差异化对象，因为它同样面向最终用户，但目标是通用个人 Agent。',
-    'BAI Work 用项目级状态、短执行链和产物验收建立差异化。',
-    'BAI Code 不作为主要竞品，它是 BAI Work 封装并增强的底层执行引擎。'
+  addFooter(slide, 14, '证据来源：BAI Work 当前代码 · 自动化测试 · 构建与运行结果')
+  addNotes(slide, 14, '端到端工程证据链', '55 秒', [
+    '这一页把前半段技术点收束为评委可以直接判断的证据链。',
+    '从配置到工程验收，每个用户价值都对应明确的系统机制和验证入口。',
+    'BAI Work 的优势来自完整闭环，不需要依赖外部产品比较。'
   ])
 }
 
@@ -1198,7 +1198,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   addImageContain(slide, wordmark, 920 / 240, 0.72, 0.58, 3.9, 1.02)
   addText(slide, '简单，不代表能力少。', 0.76, 2.02, 5.15, 0.62, { fontSize: 29, color: C.white, bold: true })
   addText(slide, '而是把复杂度留在系统里。', 0.76, 2.82, 5.45, 0.62, { fontSize: 29, color: '8FD4CF', bold: true })
-  addText(slide, '30 秒完成配置，持续看见推进，最终拿到可验收产物。', 0.76, 3.9, 5.6, 0.82, {
+  addText(slide, '30 秒配置目标；过程可见；产物可验收。', 0.76, 3.9, 5.6, 0.82, {
     fontSize: 18,
     color: 'CDD4DB',
     bold: true,
@@ -1206,7 +1206,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   })
   const recap = [
     ['轻量架构', '项目级 Runtime Host 与最短执行链', C.teal],
-    ['Token Economy', '占用率门控与三层上下文压缩', C.amber],
+    ['Token Economy', '请求预算与上下文治理契约', C.amber],
     ['EBAI', '语义映射、来源追溯与项目级信任', C.coral],
     ['产品交付', '三平台路径、自动化测试与运行证据', C.blue],
     ['商业增长', '限量半价、额度封顶与 Cohort 验证', C.green]
@@ -1241,7 +1241,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
   })
   addNotes(slide, 19, '收束', '30 秒', [
     '最后一句：简单不是删掉能力，而是把架构、配置和安全复杂度留在系统内部。',
-    'BAI Work 通过轻量架构、Token Economy、EBAI 和工程交付形成完整差异化。',
+    'BAI Work 通过轻量架构、Token Economy、EBAI 和工程验证形成完整交付闭环。',
     '下一步是稳定签名发布并用首批真实用户数据验证留存与单位经济。'
   ])
 }
@@ -1249,7 +1249,7 @@ function addStepCard(slide, index, title, body, x, y, w, fill, accent) {
 const scriptHeader =
   '# BAI Work 项目答辩逐页讲稿\n\n' +
   '- 建议总时长：约 12 分钟（含 3 分钟产品演示）\n' +
-  '- 核心叙事：项目级轻量架构优于通用多通道架构在项目交付场景中的适配度。\n' +
+  '- 核心叙事：BAI Work 把配置、执行、上下文、安全与验收收敛成可本地验证的项目交付闭环。\n' +
   '- 答辩文件：BAI-Work-Defense-Deck.pptx\n\n'
 
 fs.writeFileSync(scriptOutput, scriptHeader + scriptSections.join('\n'))
